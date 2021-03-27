@@ -4,6 +4,7 @@
 #include <string>
 using std::string;
 using std::vector;
+using std::ostream;
 class card{
 	string ID;
 	string Cost;
@@ -19,11 +20,15 @@ class card{
 	int check_Type();
 	int check_Enters();
 	vector<char> parse_Cost();
-	vector<string> parse_Produces();
+	vector<char> parse_Produces();// need to rework for optional ie R or G
+	int get_CMC();
 	char get_Type();
+	string get_ID();
+	string get_Produces();
+	char get_Enters();
 	void set_Mode(char New_Mode);
 	char get_Mode();
-	string print_Card();
-
+	void print_Card();
+friend ostream& operator<<(ostream &os, const card &cd);
 	};
 #endif
