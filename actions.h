@@ -14,13 +14,25 @@ class actions{
 
 	vector<char> usable_mana;
 
+	vector<string> mana_from_duel_sources; // you are going to be prblamatic
+
+	card biggest_thing_in_hand;
+
+	string mana_need_to_play_biggest;
+
 	int Land_per_turn_flag = 0;
 
 	int turn_counter = 0;
 
 	public:
 
+	string compute_need();
+
+	card biggest_in_hand();
+
 	vector<card> get_deck();
+
+	int check_mana(vector<char> mana_cost, vector<char> &mana_pool, char flag);
 
 	void set_deck(vector<card> from_main);
 
@@ -40,15 +52,13 @@ class actions{
 
 	card biggest_thing_playable();
 
-	int remove_mana(char mana_symbol);
+	int remove_mana(char mana_symbol, vector<char> &pool);
 
 	int play_biggest_thing(card Big_thing);
 	
 	void end_check();
 
 	void turn_report();
-
-	int check_remaining_cards();
 
 	int game_loop(vector<card> input);
 };

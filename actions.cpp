@@ -5,8 +5,10 @@ using std::cerr;
 using std::endl;
 #define DB_FLAG 3
 #define DB(level, x) do{if(DB_FLAG > level){cerr << x << endl; }}while(0)
+#define VDB(level, x) do{if(DB_FLAG > level){for(auto h : x){cerr << h;} cerr << endl;}}while(0)
 #else
 #define DB(level, x) do{if(DB_FLAG > level){}}while(0)
+#define VDB(level, x) do{if(DB_FLAG > level){}}while(0)
 #endif
 
 #include "card.h"
@@ -18,6 +20,7 @@ using std::endl;
 #include <string>
 #include <cstdlib>
 #include <cctype>
+using std::string;
 using std::cout;
 using std::endl;
 using std::random_shuffle;
@@ -33,7 +36,9 @@ using std::toupper;
 
 	vector<card> deck;
 
-	vector<string> usable_mana;
+	vector<char> usable_mana; //mana avalable to cast spells
+
+
 
 	int Land_per_turn_flag = 0;
 
@@ -47,22 +52,15 @@ using std::toupper;
 		random_shuffle(from_main.begin(), from_main.end());
 		deck = from_main;
 
-		//shuffle test
-//		for( auto deck_card : deck){
-//			card this_card = deck_card;
-//			this_card.print_Card();
-//		}
 	}
 		
 
 	void actions::set_initial_Hand(){
-//		DB(to_string(deck.size()));
 		for(int i = 0; i < 7; i++){
 			hand.push_back(deck[0]);
 			deck.erase(deck.begin());
 		}
 		initial_hand = hand;
-//		DB(to_string(deck.size()));
 	}
 
 	void actions::new_turn(){
@@ -85,6 +83,17 @@ using std::toupper;
 			return-1;
 			}
 			
+	string actions::compute_need(){
+		string needed_mana = "";
+		for(auto m : biggest_thing_in_hand.parse_Cost()){
+			if(m == 'C')
+				needed_mana += m;;
+			else
+				needed_mana = m + needed_mana;
+		}
+	return needed_mana;
+	}
+
 
 	int actions::play_Land(){
 		if(Land_per_turn_flag == 0){
@@ -95,9 +104,7 @@ using std::toupper;
 					playable_lands.push_back(card);
 				}
 			}
-		//	for(auto card : playable_lands){
-		//		card.print_Card();
-		//	}
+			VDB(5, playable_lands);
 			if(playable_lands.size() < 1){
 				return -1;
 			}
@@ -107,16 +114,13 @@ using std::toupper;
 				       	played_land.set_Mode('U');	
 					Land_per_turn_flag = 1;
 					field.push_back(played_land);
-					DB(5,"\nRemoving from hand");
+					DB(5,"\nRemoving from hand and initial hand");
 					hand = remove_card(played_land, hand);
-					DB(1,"\nhand");
-					DB(1, hand[0]);
-//					print_selection(hand);
-//					DB("\nRemoving from Initial");
+					VDB(10,hand);
 					initial_hand = remove_card(played_land, initial_hand);
-//					DB("\nInitial hand");
-//					print_selection(initial_hand);
-					DB(1,field[0]);
+					VDB(10, initial_hand);
+					DB(10,"\nfield");
+					VDB(10,field);
 					return 0;
 
 				}
@@ -170,6 +174,16 @@ using std::toupper;
 		}
 	}
 
+	card actions::biggest_in_hand(){
+		card biggest;
+		for( auto card_in_hand : hand){
+			int CMC = card_in_hand.get_CMC();
+			if(CMC > biggest.get_CMC()){
+				biggest = card_in_hand;
+			}
+		}
+		return biggest;
+	}
 // this will need much changing once i add another color
 
 	card actions::biggest_thing_playable(){
@@ -178,11 +192,44 @@ using std::toupper;
 		for( auto card_in_hand : hand){
 			int CMC = card_in_hand.get_CMC();
 			if(CMC <= total_mana_avalable && CMC > biggest.get_CMC()){
-				biggest = card_in_hand;
+				vector<char> mana_cost = card_in_hand.parse_Cost();
+				if(check_mana(mana_cost, usable_mana, 'C') != -1)
+					biggest = card_in_hand;
 			}
 		}
 		return biggest;
 	}
+
+// to check if the right mana is avalable, also functions as paying mana
+
+	int actions::check_mana(vector<char> mana_cost, vector<char> &mana_pool, char flag){
+		vector<char> temp_pool = mana_pool; // incase of not right mana
+		if(flag == 'P'){ //pay mana, actualy remove from pool
+			for(auto cost_symbol : mana_cost){
+				if(remove_mana(cost_symbol, mana_pool) == -1){
+					DB(5,"\nPay failed");
+					mana_pool.clear(); // clear out mana vector
+					mana_pool = temp_pool; // set it back to what it was at start of function
+					return -1;
+				}
+			}
+		}
+		else{  //temporarily empty from pool
+			for(auto cost_symbol : mana_cost){
+				if(remove_mana(cost_symbol, mana_pool) == -1){
+					DB(5,"\ncheck failed");
+					mana_pool.clear(); // clear out mana vector
+					mana_pool = temp_pool; // set it back to what it was at start of function
+					return -1;
+				}
+			}
+			mana_pool.clear(); // clear out mana vector
+			mana_pool = temp_pool; // set it back to what it was at start of function
+		}
+		DB(5,"mana available");
+		return 0;
+	}
+
 
 	int actions::play_biggest_thing(card Big_thing){
 		hand = hand;
@@ -190,33 +237,33 @@ using std::toupper;
 			DB(5,"Nothing More to play");
 			return -1;}
 		vector<char> mana_cost = Big_thing.parse_Cost();
-		for(auto cost_symbol : mana_cost){
-			if(remove_mana(cost_symbol) == -1){
-				DB(5,"\ndo not have the right type of mana");
-				return -1;
-			}
-		}
-			DB(1,"\n\nplaying");
-		Big_thing.print_Card();
+		check_mana(mana_cost, usable_mana, 'P');
+		
+		DB(1,"\n\nplaying");
+		DB(1,Big_thing);
+		
 		DB(1,"\nRemoving from hand");
-			field.push_back(Big_thing);
+		field.push_back(Big_thing);
 		hand = remove_card(Big_thing, hand);
+		
 		DB(5,"\nhand");
-		print_selection(hand);
-		DB(1,"\nRemoving from Initial");
+		VDB(1, hand);
+		
+		DB(5,"\nRemoving from Initial");
 		initial_hand = remove_card(Big_thing, initial_hand);
-					DB(1,"\nInitial hand");
-					for(auto h : initial_hand){DB(1,h);}
+		DB(1,"\nInitial hand");
+		VDB(5, initial_hand);		
 		return 0;
 		}
 
 
-			//we have already determined that i have enough mana to cover cmc
-	int actions::remove_mana(char mana_symbol){
-		for(int i = 0; i < usable_mana.size(); i++){
+//removes mana from a given pool
+//latter will have ability to remove mana from duel sources
+
+	int actions::remove_mana(char mana_symbol, vector<char> &pool){
+		for(int i = 0; i < pool.size(); i++){
 			if(toupper(usable_mana[i]) == toupper(mana_symbol)){
-//				DB("Removed ");
-//				DB(usable_mana[i]);
+				DB(5,string("Removed ") +  usable_mana[i]);
 				usable_mana.erase(usable_mana.begin()+i);
 				return 0;
 			}
@@ -224,7 +271,7 @@ using std::toupper;
 		if(toupper(mana_symbol) == 'C'){
 //				DB("Removed ");
 //				DB(usable_mana[0]);
-			usable_mana.erase(usable_mana.begin()); // remove first mana to cover colorless
+			pool.erase(usable_mana.begin()); // remove first mana to cover colorless
 					//will need revamp when multicolor
 			return 0;
 			}
@@ -234,24 +281,27 @@ using std::toupper;
 
 	void turn_report();
 
-	int check_remaining_cards();
 
 	int actions::game_loop(vector<card> input){
 		turn_counter = 0;
 		set_deck(input);
 		set_initial_Hand();
-		DB(1,"iInitial Hand");
+		DB(1,"Initial Hand");
+		VDB(1, initial_hand);		
 //		print_selection(initial_hand);
 		while(1==1){
 			new_turn();
 		
 		if(draw_card() == -1){
 		       //end run
-			DB(1,"Drew all cards");
+			cout << "Drew all cards";
 			return -1;
 		}
+		biggest_thing_in_hand = biggest_in_hand();
+		DB(1, "biggest thing in hand");
+		DB(1, biggest_thing_in_hand);
 		if(play_Land() == -1){
-			DB(1,"no lands to play this turn");
+			cout << "no lands to play this turn";
 		}
 		if(initial_hand.size() == 0){
 //			break;
@@ -261,7 +311,6 @@ using std::toupper;
 		//	for(auto mana : usable_mana){
 		//		cout << mana + to_string(mana) << endl;
 		//	}
-			DB(1," ");
 		while(play_biggest_thing(biggest_thing_playable()) != -1){
 			for(auto mana : usable_mana){
 				DB(5, mana);
