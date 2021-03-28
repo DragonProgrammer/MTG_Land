@@ -46,6 +46,21 @@ using std::toupper;
 
 	vector<card> actions::get_deck(){return deck;}
 
+
+		
+
+
+		
+
+
+
+
+/************************************************************
+ * Game Actions
+ * 	The part of the game the is seen
+***********************************************************/
+
+
 	void actions::set_deck(vector<card> from_main){
 		srand(unsigned(time(0)));	
 	
@@ -53,7 +68,6 @@ using std::toupper;
 		deck = from_main;
 
 	}
-		
 
 	void actions::set_initial_Hand(){
 		for(int i = 0; i < 7; i++){
@@ -82,18 +96,7 @@ using std::toupper;
 		else
 			return-1;
 			}
-			
-	string actions::compute_need(){
-		string needed_mana = "";
-		for(auto m : biggest_thing_in_hand.parse_Cost()){
-			if(m == 'C')
-				needed_mana += m;
-			else
-				needed_mana = m + needed_mana;
-		}
-	return needed_mana;
-	}
-
+	
 
 	int actions::play_Land(){
 		if(Land_per_turn_flag == 0){
@@ -131,6 +134,44 @@ using std::toupper;
 		return 0;
 	}
 
+	void actions::draw_all_Mana(){
+		for(auto card_on_field :field){
+			if(card_on_field.get_Produces() != "0" && card_on_field.get_Mode() == 'U'){
+				vector<char> one_source = card_on_field.parse_Produces();
+				for(auto mana_produced : one_source){
+					usable_mana.push_back(mana_produced);
+				}
+				card_on_field.set_Mode('T');
+			}
+		}
+	}
+
+	int actions::play_biggest_thing(card Big_thing){
+		hand = hand;
+		if(Big_thing.get_ID().length() == 0){
+			DB(5,"Nothing More to play");
+			return -1;}
+		vector<char> mana_cost = Big_thing.parse_Cost();
+		check_mana(mana_cost, usable_mana, 'P');
+		
+		DB(1,"\n\nplaying");
+		DB(1,Big_thing);
+		
+		DB(5,"\nRemoving from hand and initial hand");
+		field.push_back(Big_thing);
+		hand = remove_card(Big_thing, hand);
+		
+		DB(10,"\nhand");
+		VDB(10, hand);
+		
+		initial_hand = remove_card(Big_thing, initial_hand);
+		DB(10,"\nInitial hand");
+		VDB(10, initial_hand);		
+		return 0;
+		}
+
+
+
 	vector<card> actions::remove_card(card to_remove, vector<card> remove_from){
 		to_remove.print_Card();
 		string remove_ID = to_remove.get_ID();
@@ -146,17 +187,6 @@ using std::toupper;
 		return remove_from;
 	}
 
-	void actions::draw_all_Mana(){
-		for(auto card_on_field :field){
-			if(card_on_field.get_Produces() != "0" && card_on_field.get_Mode() == 'U'){
-				vector<char> one_source = card_on_field.parse_Produces();
-				for(auto mana_produced : one_source){
-					usable_mana.push_back(mana_produced);
-				}
-				card_on_field.set_Mode('T');
-			}
-		}
-	}
 
 	void actions::end_check(){
 		if(initial_hand.size() < 1){
@@ -166,14 +196,10 @@ using std::toupper;
 		}
 	}
 
-
-	void actions::print_selection(vector<card> to_output){
-		if(to_output.size() < 1){ return;}
-		for( auto card : to_output){
-			card.print_Card();
-		}
-	}
-
+/***************************************************************
+ * Card Selection
+ * 	functions that return card objects
+ ***************************************************************/
 	card actions::biggest_in_hand(){
 		card biggest;
 		for( auto card_in_hand : hand){
@@ -193,6 +219,8 @@ using std::toupper;
 			int CMC = card_in_hand.get_CMC();
 			if(CMC <= total_mana_avalable && CMC > biggest.get_CMC()){
 				vector<char> mana_cost = card_in_hand.parse_Cost();
+				DB(3, "checking ");
+				DB(3, card_in_hand);
 				if(check_mana(mana_cost, usable_mana, 'C') != -1)
 					biggest = card_in_hand;
 			}
@@ -200,14 +228,21 @@ using std::toupper;
 		return biggest;
 	}
 
+/****************************************************************************
+ * Mana manipulationn
+ * 	things that change the mana pool
+ * 	besides initial drawing mana as that tapps things too
+******************************************************************************/
+
 // to check if the right mana is avalable, also functions as paying mana
 
 	int actions::check_mana(vector<char> mana_cost, vector<char> &mana_pool, char flag){
 		vector<char> temp_pool = mana_pool; // incase of not right mana
 		if(flag == 'P'){ //pay mana, actualy remove from pool
+			DB(3, "in payment");
 			for(auto cost_symbol : mana_cost){
 				if(remove_mana(cost_symbol, mana_pool) == -1){
-					DB(5,"\nPay failed");
+					DB(3,"\nPay failed");
 					mana_pool.clear(); // clear out mana vector
 					mana_pool = temp_pool; // set it back to what it was at start of function
 					return -1;
@@ -215,9 +250,10 @@ using std::toupper;
 			}
 		}
 		else{  //temporarily empty from pool
+			DB(1, "in check");
 			for(auto cost_symbol : mana_cost){
 				if(remove_mana(cost_symbol, mana_pool) == -1){
-					DB(5,"\ncheck failed");
+					DB(3,"\ncheck failed");
 					mana_pool.clear(); // clear out mana vector
 					mana_pool = temp_pool; // set it back to what it was at start of function
 					return -1;
@@ -226,35 +262,9 @@ using std::toupper;
 			mana_pool.clear(); // clear out mana vector
 			mana_pool = temp_pool; // set it back to what it was at start of function
 		}
-		DB(5,"mana available");
+		DB(3,"mana available");
 		return 0;
 	}
-
-
-	int actions::play_biggest_thing(card Big_thing){
-		hand = hand;
-		if(Big_thing.get_ID().length() == 0){
-			DB(5,"Nothing More to play");
-			return -1;}
-		vector<char> mana_cost = Big_thing.parse_Cost();
-		check_mana(mana_cost, usable_mana, 'P');
-		
-		DB(1,"\n\nplaying");
-		DB(1,Big_thing);
-		
-		DB(1,"\nRemoving from hand");
-		field.push_back(Big_thing);
-		hand = remove_card(Big_thing, hand);
-		
-		DB(5,"\nhand");
-		VDB(1, hand);
-		
-		DB(5,"\nRemoving from Initial");
-		initial_hand = remove_card(Big_thing, initial_hand);
-		DB(1,"\nInitial hand");
-		VDB(5, initial_hand);		
-		return 0;
-		}
 
 
 //removes mana from a given pool
@@ -279,7 +289,70 @@ using std::toupper;
 		return -1;
 		}
 
+/**************************************************************************
+ * Decision making
+ * 	fuctions that decide what card card to play now
+ * 	Currently only determines what land needed next
+ * 	Playing biggest thing first and later playing mana producers first is coded in and not decided
+****************************************************************************/
+
+
+
+	vector<string> actions::compute_need(){
+			}
+
+	vector<int> mana_numbers(vector<char> mana_vector){
+		vector<int> numbers = {0, 0, 0, 0, 0, 0}; // {R, W, B, U, G, C}
+		for(auto m : mana_vector){
+			switch (toupper(m)){
+				case 'R':
+					numbers[0]++;
+					break;
+				case 'W':
+					numbers[1]++;
+					break;
+				case 'B':
+					numbers[2]++;
+					break;
+				case 'U':
+					numbers[3]++;
+					break;
+				case 'G':
+					numbers[4]++;
+					break;
+				case 'C':
+					numbers[5]++;
+					break;
+				default:
+					break;
+			}
+		}
+		return numbers;
+	}
+		
+
+
+/************************************************************************************
+ * Output
+ * 	Data colection functions
+*************************************************************************************/
+
+
+	void actions::print_selection(vector<card> to_output){
+		if(to_output.size() < 1){ return;}
+		for( auto card : to_output){
+			card.print_Card();
+		}
+	}
 	void turn_report();
+
+
+/***************************************************************************************
+* The Game
+* 	The functions that determin the order things happen in
+*********************************************************************************************/
+
+
 
 
 	int actions::game_loop(vector<card> input){
@@ -300,6 +373,8 @@ using std::toupper;
 		biggest_thing_in_hand = biggest_in_hand();
 		DB(1, "biggest thing in hand");
 		DB(1, biggest_thing_in_hand);
+		mana_need_to_play_biggest = compute_need();
+		DB(1, mana_need_to_play_biggest);
 		if(play_Land() == -1){
 			cout << "no lands to play this turn";
 		}
@@ -307,19 +382,16 @@ using std::toupper;
 //			break;
 		}
 		draw_all_Mana();
-		DB(5,"\n\nmana");
-		//	for(auto mana : usable_mana){
-		//		cout << mana + to_string(mana) << endl;
-		//	}
+		DB(1,"\n\nmana");
+		VDB(1, usable_mana);
 		while(play_biggest_thing(biggest_thing_playable()) != -1){
-			for(auto mana : usable_mana){
-				DB(5, mana);
+				VDB(1, usable_mana);
 			}
 		if(initial_hand.size() == 0){
 //			break;
 		}
 		}
-		}
+		
 		DB(1," ");
 		cout << "Took " + to_string(turn_counter) + " turns.";
 		return 0;
