@@ -87,7 +87,7 @@ using std::toupper;
 		string needed_mana = "";
 		for(auto m : biggest_thing_in_hand.parse_Cost()){
 			if(m == 'C')
-				needed_mana += m;;
+				needed_mana += m;
 			else
 				needed_mana = m + needed_mana;
 		}
@@ -263,7 +263,7 @@ using std::toupper;
 	int actions::remove_mana(char mana_symbol, vector<char> &pool){
 		for(int i = 0; i < pool.size(); i++){
 			if(toupper(usable_mana[i]) == toupper(mana_symbol)){
-				DB(5,string("Removed ") +  usable_mana[i]);
+				DB(1,string("Removed ") +  usable_mana[i]);
 				usable_mana.erase(usable_mana.begin()+i);
 				return 0;
 			}
