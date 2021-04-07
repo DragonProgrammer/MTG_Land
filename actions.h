@@ -18,7 +18,7 @@ class actions{
 
 	card biggest_thing_in_hand;
 
-	string mana_need_to_play_biggest;
+	vector<string> mana_need_to_play_biggest;
 
 	int Land_per_turn_flag = 0;
 
@@ -26,7 +26,11 @@ class actions{
 
 	public:
 
-	string compute_need();
+	vector<string> compute_need();
+
+	vector<int> mana_numbers(vector<char> mana_vector);
+
+	vector<int> compute_dif(vector<int> have, vector<int> need);
 
 	card biggest_in_hand();
 
@@ -36,19 +40,23 @@ class actions{
 
 	void set_deck(vector<card> from_main);
 
-	vector<card> remove_card(card to_remove, vector<card> remove_from);
+	int remove_card(card to_remove, vector<card> &remove_from);
 
 	void print_selection(vector<card> to_output);
 
 	void set_initial_Hand();
 
-	void new_turn();
+	void new_turn(vector<card> &in_play);
 
 	int draw_card();
 
 	int play_Land();
 
-	void draw_all_Mana();
+	void draw_all_Mana(vector<card> &in_play);
+
+	card find_land(vector<card> lands);
+
+	float average_for_deck(vector<card> input);
 
 	card biggest_thing_playable();
 
@@ -56,7 +64,7 @@ class actions{
 
 	int play_biggest_thing(card Big_thing);
 	
-	void end_check();
+	int end_check();
 
 	void turn_report();
 

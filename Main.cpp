@@ -7,6 +7,7 @@ using std::fstream;
 using std::cout;
 using std::endl;
 using std::string;
+using std::to_string;
 int main(int argc, char *argv[]) {
 	fstream deck_input;
 	deck_input.open(argv[1]);
@@ -25,12 +26,7 @@ int main(int argc, char *argv[]) {
 
 
 	actions Game_run;
-	Game_run.game_loop(deck_from_file);
-//	vector<card> shuffled = Game_run.get_deck();
-//	cout << shuffled.size() <<endl;
-//	for(auto card : shuffled){
-//		card.print_Card();
-//	}
-//	TEST.set_card(test_input );
+	float average = Game_run.average_for_deck(deck_from_file);
+	cout << "The average for the deck is " << to_string(average) << endl;
 	return 0;
 }

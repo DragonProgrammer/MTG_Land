@@ -125,5 +125,5 @@ void card::print_Card(){
 	}
 	cout <<  " " + Cost + "     ";}
        
-ostream& operator<<(ostream &os, const card &cd) { return (os << cd.ID + " " + cd.Type + " " + cd.Cost << "    "); }
+ostream& operator<<(ostream &os, const card &cd) { return (os << cd.ID + " " + cd.Type + " " + cd.Cost + " " + cd.Mode + "    "); }
 
