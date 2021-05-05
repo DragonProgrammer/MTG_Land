@@ -3,6 +3,8 @@
 #include "card.h"
 #include <vector>
 #include <string>
+#include "mana.h"
+#include "GameState.h"
 class actions{
 	vector<card> hand;
 
@@ -12,9 +14,13 @@ class actions{
 
 	vector<card> deck;
 
-	vector<char> usable_mana;
+	vector<mana> usable_mana;
 
-	vector<string> mana_from_duel_sources; // you are going to be prblamatic
+	vector<mana> mana_from_optional_sources; // you are going to be prblamatic
+
+	vector<GameState> state;
+
+
 
 	card biggest_thing_in_hand;
 
@@ -26,17 +32,29 @@ class actions{
 
 	public:
 
-	vector<string> compute_need();
+	GameState get_state();
 
-	vector<int> mana_numbers(vector<char> mana_vector);
+	void set_state();
 
-	vector<int> compute_dif(vector<int> have, vector<int> need);
+
+
+	vector<string> compute_mana_percentages();  //adds the mana types to the source vector and orders
+	vector<float> compute_source_vector(); // computes the mana/source percentage for each color
+	int compute_sources();
+
+	vector<float> mana_pool_numbers(vector<mana> mana_vector, char Flag); // flag options are 'O' for use optional, 'N' for normal
+	vector<int> mana_cost_numbers(vector<char> mana_vector); 
+
+
+
+	vector<int> compute_dif(vector<float> have, vector<int> need); // probably to be depricated
+	vector<string> compute_need(); //also to be depricated
 
 	card biggest_in_hand();
 
 	vector<card> get_deck();
 
-	int check_mana(vector<char> mana_cost, vector<char> &mana_pool, char flag);
+	int check_mana(vector<char> mana_cost, char flag); //need to update
 
 	void set_deck(vector<card> from_main);
 
@@ -54,13 +72,15 @@ class actions{
 
 	void draw_all_Mana(vector<card> &in_play);
 
+	int land_search();
+
 	card find_land(vector<card> lands);
 
 	float average_for_deck(vector<card> input);
 
 	card biggest_thing_playable();
 
-	int remove_mana(char mana_symbol, vector<char> &pool);
+	int remove_mana(char mana_symbol);
 
 	int play_biggest_thing(card Big_thing);
 	
