@@ -215,15 +215,16 @@ int actions::play_Land() {
 
 void actions::draw_all_Mana(vector<card>& in_play) {
 	for (auto& card_on_field : in_play) {
-		if (card_on_field.get_Produces() != "0" &&
+		if (card_on_field.get_Produces() != "-" &&
 		    toupper(card_on_field.get_Mode()) == 'U') {
 			DB(1, "Mode change");
 			DB(1, card_on_field.get_Mode());
 			vector<mana> sourced;
+			sourced = card_on_field.parse_Produces();
 
 			string produces = card_on_field.get_Produces();
+
 			if(produces.find('_') == -1){
-				sourced = card_on_field.parse_Produces();
 				for (auto mana_produced : sourced) {
 					usable_mana.push_back(mana_produced);
 				}
@@ -492,6 +493,9 @@ vector<int> actions::mana_cost_numbers(vector<char> mana_vector) {
 	return numbers;
 }
 
+
+// tallys how many mana sources there are, should be called before anything played
+// 	possible thought making this number part of gameState 
 int actions::compute_sources(){
 	mana_sources = 0;
 	for(auto c : field){
@@ -503,7 +507,8 @@ int actions::compute_sources(){
 }
 
 
-// returns the percent of sources that can produce a give ncolor of mana
+// returns the percent of sources that can produce a given color of mana
+//    anther number for game_state?
 vector<float> actions::compute_source_vector(){
 	vector<float> available_mana = mana_pool_numbers(usable_mana, 'O');
 	float source_number = compute_sources();
@@ -550,25 +555,22 @@ vector<float> actions::mana_pool_numbers(vector<mana> mana_vector, char Flag) {
 		}
 	}
 	if(Flag == 'O'){ // O for optional
-		for(auto c : field){
-			string mana_options = c.get_Produces();
-			if(mana_options.find('_') > 1){
-				if(mana_options.find('R') >= 0)
+		for(auto m : mana_from_optional_sources){
+				if(m.can_produce('R'))
 					numbers[0]++;
-				if(mana_options.find('W') >= 0)
+				if(m.can_produce('W'))
 					numbers[1]++;
-				if(mana_options.find('B') >= 0)
+				if(m.can_produce('B'))
 					numbers[2]++;
-				if(mana_options.find('U') >= 0)
+				if(m.can_produce('U'))
 					numbers[3]++;
-				if(mana_options.find('G') >= 0)
+				if(m.can_produce('G'))
 					numbers[4]++;
-				if(mana_options.find('C') >= 0)
+				if(m.can_produce('C'))
 					numbers[5]++;
 			}
 		}
-	}
-
+	
 	return numbers;
 }
 vector<int> actions::compute_dif(vector<float> have, vector<int> need) {
@@ -613,16 +615,18 @@ void turn_report();
  * 	The functions that determin the order things happen in
  *********************************************************************************************/
 float actions::average_for_deck(vector<card> input) {
-	int total_runs = 50;
+	int total_runs = 50; //TODO later make this changeable by input
 	int total_turns = 0;
-	for (int run = 1; run < total_runs; run++) {
+	int failed_games = 0; //TODO posiblby make this an extern so i can output it in report
+	for (int run = 0; run < total_runs; run++) {
 		int turns = game_loop(input);
-		cout << "\nTook " + to_string(turns) + " turns.";
+		if(turns == 0)
+			failed_games++;
+		DB(1, "\nTook " + to_string(turns) + " turns.");
 		total_turns += turns;
 	}
 	DB(1, total_turns);
-	float average_turns = float(total_turns) / float(total_runs);
-
+	float average_turns = float(total_turns) / float(total_runs-failed_games);
 	return average_turns;
 }
 
@@ -638,7 +642,8 @@ int actions::game_loop(vector<card> input) {
 		if (draw_card() == -1) {
 			// end run
 			cout << "Drew all cards";
-			return -1;
+			set_state();// allows me to make report off of failed run
+			return 0; //indicates failed run
 		}
 		draw_all_Mana(field);
 		DB(6, "\n\nmana before land play");
@@ -661,7 +666,8 @@ int actions::game_loop(vector<card> input) {
 			return turn_counter;
 		}
 
-		draw_all_Mana(field);
+		draw_all_Mana(field);// adds mana from new land
+		set_state();
 		DB(6, "\n\nmana after land play");
 		VDB(6, usable_mana);
 		while ((end_check = play_biggest_thing(biggest_thing_playable())) != -1) {
