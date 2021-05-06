@@ -67,6 +67,7 @@ vector<card> deck;
 
 vector<mana> usable_mana;  // mana avalable to cast spells
 
+
 int Land_per_turn_flag = 0;
 
 int turn_counter = 0;
@@ -120,6 +121,8 @@ int actions::draw_card() {
 		return -1;
 }
 
+//this function simulates terimorphic expance
+//TODO split function so there is an effect search that looks for terimorfic and other sac to find land(s) and the actual search
 int actions::land_search() {
 	for (auto card_on_field : field) {
 		if (card_on_field.get_ECost() == 'S' &&
@@ -133,7 +136,8 @@ int actions::land_search() {
 			}
 			if (lands_in_deck.size() > 0) {
 				card found_land = find_land(lands_in_deck);
-				field.push_back(found_land);
+				field.push_back(found_land); // curently assumes that card goes to field
+				//TODO add flag that puts land in hand or field
 				field[field.size() - 1].set_Mode('T');
 				if (remove_card(found_land, deck) == -1) {
 					return -2;
@@ -145,12 +149,23 @@ int actions::land_search() {
 	}
 	return 1;  // no land search found
 }
+//TODO add traits Playable and Needed_to_play to card
+//TODO create function that sets each of those traits for cards in hand
+//TODO create a function that creates a need vector based on Needed_to_play
+//	give priority to colors from cards that need only 1 more mana, and then number of cards that need that color
+//	if tied decide with cards that need 2 manna of a color
 
+//this function returns a land card from a  given a card vector (hand or deck) based on a vector of mana need
+//TODO add 2 char flags to this for cards that search for only a basic, basic or gate, ext.
+//	posibility this sifting may be done in another function whose results are passed to this
+//TODO add subtype to card traits
 card actions::find_land(vector<card> lands) {
 	vector<string> deciding_vector = compute_need();
 	card played_land;
-	for (auto mana_need : deciding_vector) {
-		char land_color = mana_need[1];
+//	for (auto mana_need : deciding_vector) {
+	for(int i = 0; i < 6; i++){
+		string mana_need = deciding_vector[i];
+		char land_color = mana_need[mana_need.length()-1];// this should return the mana symbol of the float string
 		for (auto selected_card : lands) {
 			if (selected_card.get_Enters() == 'U' &&
 			    selected_card.get_Produces().find(land_color)>-1) {
@@ -158,23 +173,46 @@ card actions::find_land(vector<card> lands) {
 				return played_land;
 			}
 		}
-
-		for (auto selected_card : lands) {
-			if (selected_card.get_Enters() == 'T' &&
-			    selected_card.get_Produces().find(land_color)>-1) {
+		for(auto selected_card : lands) {
+			if(selected_card.get_Produces().length() == 5)//can produce 3 different colors
 				played_land = selected_card;
-				return played_land;
+			return played_land;
+		}	
+		
+		string mana_need_2;
+		char land_color_2;
+		if(i != 5){
+			mana_need_2 = deciding_vector[i+1];
+			land_color_2 = mana_need_2[mana_need_2.length()-1];// this should return the mana symbol of the float string
+		}
+		
+		int selected_flag = 0; // a card has been selected did not have land_color_2
+		for (auto selected_card : lands) {
+			vector<mana> bounce_test = selected_card.parse_Produces();
+			if(bounce_test.size() == 1){
+			mana trial = bounce_test[0]; // this dous not factor in bounce lands
+			if (selected_card.get_Enters() == 'T' &&  trial.can_produce(land_color)) {
+				played_land = selected_card;
+				selected_flag = 1;
+				if(trial.can_produce(land_color_2))
+					return played_land;
+			}
+			}
+			if(bounce_test.size() ==2){
+			//TODO
 			}
 		}
+		if(selected_flag == 1)
+			return played_land;
 	}
-
+//find me a teramorphic
 	for (auto selected_card : lands) {
 		if (selected_card.get_Enters() == 'U') {
 			played_land = selected_card;
 			return played_land;
 		}
 	}
-
+//find me a land that does not produce mana
 	return lands[0];
 }
 
@@ -305,7 +343,6 @@ card actions::biggest_in_hand() {
 	}
 	return biggest;
 }
-// this will need much changing once i add another color
 
 card actions::biggest_thing_playable() {
 	int total_mana_avalable = usable_mana.size() + mana_from_optional_sources.size();
@@ -316,7 +353,7 @@ card actions::biggest_thing_playable() {
 			vector<char> mana_cost = card_in_hand.parse_Cost();
 			DB(3, "checking ");
 			DB(3, card_in_hand);
-			if (check_mana(mana_cost, 'C') != -1) //check line need update 
+			if (check_mana(mana_cost, 'C') != -1)  
 				biggest = card_in_hand;
 		}
 	}
@@ -330,7 +367,7 @@ card actions::biggest_thing_playable() {
  ******************************************************************************/
 
 // to check if the right mana is avalable, also functions as paying mana
-
+//TODO move flag check so we have 1 for loop, need to make sure optional mana works first
 int actions::check_mana(vector<char> mana_cost, char flag) {
 	vector<mana> temp_pool = usable_mana;	// incase of not right mana
 	vector<mana> temp_optional = mana_from_optional_sources;

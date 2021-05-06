@@ -2,7 +2,7 @@
 #include <string>
 #include <ostream>
 
-
+//TODO see if adding a cost condion in is appropriete, i.e. color fixing lands
 	string options;
 	char produced;
 	string source;
@@ -25,6 +25,8 @@
 	}
 
 	bool mana::can_produce(char want){
+//		if(produced == 'A')  // this presents a problem with color fixing lands verse rupture spire lands
+//			return true;
 		if(produced == want)
 			return true;
 		if(options.find(want) > -1)

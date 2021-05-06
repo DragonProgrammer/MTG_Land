@@ -18,6 +18,8 @@ class actions{
 
 	vector<mana> mana_from_optional_sources; // you are going to be prblamatic
 
+	vector<float> mana_percentages;
+
 	vector<GameState> state;
 
 
