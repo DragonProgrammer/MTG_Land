@@ -13,7 +13,8 @@ class mana{
 	char get_produced();
 	string get_options();
 	string get_source();
-	mana(string o, string from);
+	mana(string source_options, string from);
+	mana(char source_produced, string from);
 	void set_produced(char symbol);
 	bool can_produce(char want);
 

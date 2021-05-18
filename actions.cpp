@@ -1,36 +1,4 @@
-#ifndef DEBUG
-#define DEBUG
-#include <iostream>
-using std::cerr;
-using std::endl;
-#define DB_FLAG 1
-#define DB(level, x)       \
-	do {                     \
-		if (DB_FLAG > level) { \
-			cerr << x << endl;   \
-		}                      \
-	} while (0)
-#define VDB(level, x)      \
-	do {                     \
-		if (DB_FLAG > level) { \
-			for (auto h : x) {   \
-				cerr << h << "  "; \
-			}                    \
-			cerr << endl;        \
-		}                      \
-	} while (0)
-#else
-#define DB(level, x)       \
-	do {                     \
-		if (DB_FLAG > level) { \
-		}                      \
-	} while (0)
-#define VDB(level, x)      \
-	do {                     \
-		if (DB_FLAG > level) { \
-		}                      \
-	} while (0)
-#endif
+#include "Debug.h"
 #include <stdio.h>
 #include <algorithm>
 #include <cctype>
@@ -109,7 +77,7 @@ void actions::new_turn(vector<card>& in_play) {
 	turn_counter++;
 	Land_per_turn_flag = 0;
 	usable_mana.clear();
-	DB(7, "\nTurn " + to_string(turn_counter));
+	DB("\nTurn " + to_string(turn_counter), 7);
 }
 
 int actions::draw_card() {
@@ -128,7 +96,7 @@ int actions::land_search() {
 		if (card_on_field.get_ECost() == 'S' &&
 		    card_on_field.get_Effect() == "Search" &&
 		    card_on_field.get_Mode() == 'U') {
-			DB(0, "found Land search");
+			DB("found Land search", 0);
 			vector<card> lands_in_deck;
 			for (auto card_in_deck : deck) {
 				if (card_in_deck.get_Type() == 'L')
@@ -161,23 +129,29 @@ int actions::land_search() {
 //TODO add subtype to card traits
 card actions::find_land(vector<card> lands) {
 	vector<string> deciding_vector = compute_need();
+	DBV(deciding_vector, -1);
 	card played_land;
 //	for (auto mana_need : deciding_vector) {
 	for(int i = 0; i < 6; i++){
 		string mana_need = deciding_vector[i];
 		char land_color = mana_need[mana_need.length()-1];// this should return the mana symbol of the float string
+		DB("mana need " << land_color, 0);
 		for (auto selected_card : lands) {
+			mana basic_test = selected_card.parse_Produces()[0]; // this should give me the mana a land could produce if it only proicuded one mana
 			if (selected_card.get_Enters() == 'U' &&
-			    selected_card.get_Produces().find(land_color)>-1) {
+			    basic_test.can_produce(land_color)) {
 				played_land = selected_card;
+				DB("return land optuion: basic", -1);
 				return played_land;
 			}
 		}
 		for(auto selected_card : lands) {
-			if(selected_card.get_Produces().length() == 5)//can produce 3 different colors
+			if(selected_card.get_Produces().length() == 5){//can produce 3 different colors
 				played_land = selected_card;
-			return played_land;
-		}	
+				DB("return land optuion: 3 color", -1);
+				return played_land;
+			}
+			}	
 		
 		string mana_need_2;
 		char land_color_2;
@@ -194,25 +168,31 @@ card actions::find_land(vector<card> lands) {
 			if (selected_card.get_Enters() == 'T' &&  trial.can_produce(land_color)) {
 				played_land = selected_card;
 				selected_flag = 1;
-				if(trial.can_produce(land_color_2))
+				if(trial.can_produce(land_color_2)){
+				DB("return land optuion: 2 color good", -1);
 					return played_land;
+				}
 			}
 			}
 			if(bounce_test.size() ==2){
 			//TODO
 			}
 		}
-		if(selected_flag == 1)
+		if(selected_flag == 1){
+			DB("return land optuion: 2 color bad", -1);
 			return played_land;
-	}
+		}
+		}
 //find me a teramorphic
 	for (auto selected_card : lands) {
-		if (selected_card.get_Enters() == 'U') {
+		if (selected_card.get_Enters() == 'U' && selected_card.get_Effect() == "Search") {
 			played_land = selected_card;
+			DB("return land optuion: teramorphic", -1);
 			return played_land;
 		}
 	}
 //find me a land that does not produce mana
+	DB("return land optuion: any", -1);
 	return lands[0];
 }
 
@@ -226,37 +206,41 @@ int actions::play_Land() {
 				playable_lands.push_back(card);
 			}
 		}
-		VDB(5, playable_lands);
+		DBV(playable_lands, -1);
 		if (playable_lands.size() < 1) {
+			DB("no lands in hand", -1);
 			return -1;
 		}
 
 		card played_land = find_land(playable_lands);
+		DB("played land = " << played_land,-1);
 		Land_per_turn_flag = 1;
 		field.push_back(played_land);
 
-		DB(5, "\nRemoving from hand and initial hand");
+		DB("\nRemoving from hand and initial hand", 10);
 		if (remove_card(played_land, hand) == -1) {
 			return -2;
 		};
-		VDB(10, hand);
+		DBV(hand, 10);
 		if (remove_card(played_land, initial_hand) == -1) {
 			return -2;
 		}
-		VDB(10, initial_hand);
-		DB(10, "\nfield");
-		VDB(10, field);
+		DB("\ninitial Hand", 10);
+		DBV(initial_hand, 10);
+		DB("\nfield", 10);
+		DBV( field, 10);
 		return 0;
 	}
 	return 0;
 }
 
 void actions::draw_all_Mana(vector<card>& in_play) {
+	if(in_play.size() > 0) {
 	for (auto& card_on_field : in_play) {
 		if (card_on_field.get_Produces() != "-" &&
 		    toupper(card_on_field.get_Mode()) == 'U') {
-			DB(1, "Mode change");
-			DB(1, card_on_field.get_Mode());
+			DB("Mode change", 3);
+			DB(card_on_field.get_Mode(), 3);
 			vector<mana> sourced;
 			sourced = card_on_field.parse_Produces();
 
@@ -272,8 +256,12 @@ void actions::draw_all_Mana(vector<card>& in_play) {
 				mana_from_optional_sources.push_back(sourced[0]);
 			}
 			card_on_field.set_Mode('T');
-			DB(1, card_on_field.get_Mode());
+			DB(card_on_field.get_Mode(), 10);
 		}
+	}
+	}
+	else{
+		DB("No mana sources", -1);
 	}
 	//		VDB(1, field);
 }
@@ -281,29 +269,29 @@ void actions::draw_all_Mana(vector<card>& in_play) {
 int actions::play_biggest_thing(card Big_thing) {
 	hand = hand;
 	if (Big_thing.get_ID().length() == 0) {
-		DB(5, "Nothing More to play");
+		DB("Nothing More to play",10);
 		return -1;
 	}
 	vector<char> mana_cost = Big_thing.parse_Cost();
 	check_mana(mana_cost, 'P');  //call needs to be updated
 
-	DB(1, "\n\nplaying");
-	DB(1, Big_thing);
+	DB("\n\nplaying", 3);
+	DB(Big_thing,3);
 
-	DB(5, "\nRemoving from hand and initial hand");
+	DB( "\nRemoving from hand and initial hand", 10);
 	field.push_back(Big_thing);
 	if (remove_card(Big_thing, hand) == -1) {
 		return -2;
 	};
 
-	DB(10, "\nhand");
-	// VDB(10, hand);
+	DB( "\nhand", 10);
+	DBV(hand, 10);
 
 	if (remove_card(Big_thing, initial_hand) == -1) {
 		return -2;
 	};
-	DB(10, "\nInitial hand");
-	// VDB(10, initial_hand);
+	DB("\nInitial hand", 10);
+	DBV(initial_hand, 10);
 	return 0;
 }
 
@@ -318,7 +306,7 @@ int actions::remove_card(card to_remove, vector<card>& remove_from) {
 			return 0;
 		}
 	}
-	DB(1, "\nNot it selection");
+	DB("\nNot it selection", 10);
 	return 0;
 }
 
@@ -351,8 +339,8 @@ card actions::biggest_thing_playable() {
 		int CMC = card_in_hand.get_CMC();
 		if (CMC <= total_mana_avalable && CMC > biggest.get_CMC()) {
 			vector<char> mana_cost = card_in_hand.parse_Cost();
-			DB(3, "checking ");
-			DB(3, card_in_hand);
+			DB("checking ", 2);
+			DB(card_in_hand, 2); // will want to check in course of mathing optional lands
 			if (check_mana(mana_cost, 'C') != -1)  
 				biggest = card_in_hand;
 		}
@@ -373,10 +361,10 @@ int actions::check_mana(vector<char> mana_cost, char flag) {
 	vector<mana> temp_optional = mana_from_optional_sources;
 
 	if (flag == 'P') {                   // pay mana, actualy remove from pool
-		DB(3, "in payment");
+		DB("in payment", 2); // will want to check in coure of mathing optional lands
 		for (auto cost_symbol : mana_cost) {
 			if (remove_mana(cost_symbol) == -1) {
-				DB(3, "\nPay failed");
+				DB( "\nPay failed", 2);
 				usable_mana.clear();  // clear out mana vector
 				usable_mana = temp_pool;  // set it back to what it was at start of function
 				mana_from_optional_sources.clear();
@@ -385,10 +373,10 @@ int actions::check_mana(vector<char> mana_cost, char flag) {
 			}
 		}
 	} else {  // temporarily empty from pool
-		DB(1, "in check");
+		DB("in check", 2);
 		for (auto cost_symbol : mana_cost) {
 			if (remove_mana(cost_symbol) == -1) {
-				DB(3, "\ncheck failed");
+				DB("\ncheck failed", 2);
 				usable_mana.clear();  // clear out mana vector
 				usable_mana =  temp_pool;  // set it back to what it was at start of function
 				mana_from_optional_sources.clear();
@@ -401,7 +389,7 @@ int actions::check_mana(vector<char> mana_cost, char flag) {
 		mana_from_optional_sources.clear();
 		mana_from_optional_sources = temp_optional;
 	}
-	DB(3, "mana available");
+	DB("mana available", 2);
 	return 0;
 }
 
@@ -411,14 +399,14 @@ int actions::remove_mana(char mana_symbol) {
 //		if (toupper(usable_mana[i].get_produced) == toupper(mana_symbol))
 		if(usable_mana[i].can_produce(toupper(mana_symbol)))
 		{
-			DB(1, usable_mana[i]);
+			DB(usable_mana[i], 5);
 			usable_mana.erase(usable_mana.begin() + i);
 			return 0;
 		}
 	}
 		for (int i = 0; i < mana_from_optional_sources.size(); i++) {
 			if (mana_from_optional_sources[i].can_produce(toupper(mana_symbol))){
-				DB(1, mana_from_optional_sources[i]);
+				DB(mana_from_optional_sources[i], 0);
 				mana_from_optional_sources.erase(mana_from_optional_sources.begin() + i);
 				return 0;
 			}
@@ -426,11 +414,11 @@ int actions::remove_mana(char mana_symbol) {
 		//remove first mana from a pool to cover colorless
 		if (toupper(mana_symbol) == 'C') {
 			if(usable_mana.size()>0){
-			DB(1,"for C " << usable_mana[0]);
+			DB("for C " << usable_mana[0], 3);
 				usable_mana.erase(usable_mana.begin());  
 			}	
 		else if(mana_from_optional_sources.size() > 0){
-				DB(1, "for C " << mana_from_optional_sources[0]);
+				DB( "for C " << mana_from_optional_sources[0], 3);
 			mana_from_optional_sources.erase(mana_from_optional_sources.begin()); 
 	}       
 		return 0;
@@ -449,25 +437,25 @@ int actions::remove_mana(char mana_symbol) {
 
 vector<string> actions::compute_mana_percentages() {
 	vector<float> mana_percentages = compute_source_vector();
-	DB(10, "computed percentages");
+	DB("computed percentages", -1);
 	vector<string> need_order;
 	vector<char> mana_types = {'R', 'W', 'B', 'U', 'G', 'C'};
 	for (int i = 0; i < mana_types.size(); i++) {
 		string need_of_type = to_string(mana_percentages[i]) + mana_types[i];
 		need_order.push_back(need_of_type);
 	}
-	DB(10, "made string vector");
+	DB("made string vector", 0);
 	sort(need_order.begin(),
 	     need_order.begin() + 5);  // sorts R-G, Colorless stays at end
-	DB(1, "Mana needs");
-	VDB(1, need_order);
+	DB("Mana needs", 0);
+	DBV(need_order, 0);
 
 	vector<string> descending_need_order;
 	for (int i = 4; i > -1; i--) {
 		descending_need_order.push_back(need_order[i]);
 	}
-	DB(1, "Mana needs decending");
-	VDB(1, descending_need_order);
+	DB("Mana needs decending", 0);
+	DBV(descending_need_order, 0);
 
 	return need_order;
 }
@@ -476,28 +464,29 @@ vector<string> actions::compute_mana_percentages() {
 vector<string> actions::compute_need() {
 	vector<int> mana_needed_for_biggest =
 	    mana_cost_numbers(biggest_thing_in_hand.parse_Cost());
-	DB(10, "computed for bigest");
+	DB("computed for bigest", -1);
 	vector<int> mana_requirements =
 	    compute_dif(mana_pool_numbers(usable_mana, 'N'), mana_needed_for_biggest);
-	DB(10, "computed dif");
+	DB("computed dif", -1);
 	vector<string> need_order;
 	vector<char> mana_types = {'R', 'W', 'B', 'U', 'G', 'C'};
 	for (int i = 0; i < mana_types.size(); i++) {
 		string need_of_type = to_string(mana_requirements[i]) + mana_types[i];
 		need_order.push_back(need_of_type);
 	}
-	DB(10, "made string vector");
+	DB( "made string vector", 5);
 	sort(need_order.begin(),
 	     need_order.begin() + 5);  // sorts R-G, Colorless stays at end
-	DB(1, "Mana needs");
+	DB( "Mana needs", 5);
 	// VDB(1, need_order);
 
 	vector<string> descending_need_order;
 	for (int i = 4; i > -1; i--) {
 		descending_need_order.push_back(need_order[i]);
 	}
+	descending_need_order.push_back(need_order[5]);
 
-	return need_order;
+	return descending_need_order;
 }
 
 // Parses the cost of a spell into what is needed
@@ -611,7 +600,7 @@ vector<float> actions::mana_pool_numbers(vector<mana> mana_vector, char Flag) {
 	return numbers;
 }
 vector<int> actions::compute_dif(vector<float> have, vector<int> need) {
-	DB(1, "in dif");
+	DB("in dif", -1);
 	vector<int> difs;
 	int extra = 0;
 	for (int i = 0; i < have.size(); i++) {
@@ -652,17 +641,20 @@ void turn_report();
  * 	The functions that determin the order things happen in
  *********************************************************************************************/
 float actions::average_for_deck(vector<card> input) {
-	int total_runs = 50; //TODO later make this changeable by input
+	int total_runs = 1; //TODO later make this changeable by input
 	int total_turns = 0;
 	int failed_games = 0; //TODO posiblby make this an extern so i can output it in report
 	for (int run = 0; run < total_runs; run++) {
 		int turns = game_loop(input);
-		if(turns == 0)
+		if(turns == 0){
 			failed_games++;
-		DB(1, "\nTook " + to_string(turns) + " turns.");
+			DB("Game failed", -1);
+			continue;
+			}
+		DB("\nTook " + to_string(turns) + " turns.", -2);
 		total_turns += turns;
 	}
-	DB(1, total_turns);
+	DB(total_turns, 10); // will have to check with failed games math later
 	float average_turns = float(total_turns) / float(total_runs-failed_games);
 	return average_turns;
 }
@@ -672,41 +664,49 @@ int actions::game_loop(vector<card> input) {
 	set_deck(input);
 	set_initial_Hand();
 	set_state(); // game state imnitializer
-	DB(6, "Initial Hand");
-	VDB(1, initial_hand);
+	DB("Initial Hand", 2);
+	DBV(initial_hand, 2);
 	while (1 == 1) {
 		new_turn(field);
 		if (draw_card() == -1) {
 			// end run
-			cout << "Drew all cards";
+			DB("Drew all cards in " + to_string(turn_counter) + " turns", -1);
 			set_state();// allows me to make report off of failed run
 			return 0; //indicates failed run
 		}
 		draw_all_Mana(field);
-		DB(6, "\n\nmana before land play");
-		VDB(6, usable_mana);
+		DB("\nFIeld 1: " + to_string(field.size()), -1);  //TODO update these DB statements to include optional mana
+		DBV( field, -1);
+		DB("\n\nmana before land play", -1);  //TODO update these DB statements to include optional mana
+		DBV( usable_mana, -1);
 
 		biggest_thing_in_hand = biggest_in_hand();
-		DB(6, "biggest thing in hand");
-		DB(6, biggest_thing_in_hand);
+		DB("biggest thing in hand", 5);
+		DB("\nFIeld 2: " + to_string(field.size()), -1);  //TODO update these DB statements to include optional mana
+		DB(biggest_thing_in_hand,5);
 		mana_need_to_play_biggest = compute_need();
-		DB(6, "\nMana for bigest");
-		VDB(6, mana_need_to_play_biggest);
+		DB("\nMana for bigest",5);
+		DB("\nFIeld 3: " + to_string(field.size()), -1);  //TODO update these DB statements to include optional mana
+		DBV( mana_need_to_play_biggest, 5);
 
 		set_state(); // first set of options
+		DB("\nFIeld 4: " + to_string(field.size()), -1);  //TODO update these DB statements to include optional mana
 
 		// check if played last card with land
 		int land_options = land_search();
+		DB("\nFIeld 5: " + to_string(field.size()), -1);  //TODO update these DB statements to include optional mana
 		int end_check = play_Land();
-		if (end_check == -1) DB(6, "no lands to play this turn");
+		if (end_check == -1) DB( "no lands to play this turn", 5);
 		if (end_check == -2) {
 			return turn_counter;
 		}
 
 		draw_all_Mana(field);// adds mana from new land
+		DB("\nFIeld 6: " + to_string(field.size()), -1);  //TODO update these DB statements to include optional mana
 		set_state();
-		DB(6, "\n\nmana after land play");
-		VDB(6, usable_mana);
+		DB("\n\nmana after land play", 5);
+		DB("\nFIeld 7: " + to_string(field.size()), -1);  //TODO update these DB statements to include optional mana
+		DBV(usable_mana, 5);
 		while ((end_check = play_biggest_thing(biggest_thing_playable())) != -1) {
 			// check if played last card with big thing
 			
@@ -715,7 +715,7 @@ int actions::game_loop(vector<card> input) {
 			if (end_check == -2) {
 				return turn_counter;
 			}
-			VDB(1, usable_mana);
+			DBV(usable_mana, 5);
 		}
 	}
 }

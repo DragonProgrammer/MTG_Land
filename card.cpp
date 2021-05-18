@@ -1,20 +1,4 @@
-
-#ifndef DEBUG
-#define DEBUG
-#include <iostream>
-using std::cerr;
-using std::endl;
-#define DB_FLAG 0
-#define DB(x, level)        \
-	if (DB_FLAG > level) do { \
-			cerr << x << endl;    \
-	} while (0)
-#else
-#define DB(x, level)        \
-	if (DB_FLAG > level) do { \
-	} while (0)
-#endif
-
+#include "Debug.h"
 #include <iostream>
 #include <sstream>
 #include <vector>
@@ -100,16 +84,16 @@ vector<char> card::parse_Cost() {
 vector<mana> card::parse_Produces() {
 	vector<mana> from_source;
 	int spot = 0;
-	if(Produces.find('_')>-1){
-		mana produced(Produces, ID);
-		from_source.push_back(produced);
-		return from_source;
-	}
+//	if(Produces.find('_')>-1){
+//		mana produced(Produces, ID);
+//		from_source.push_back(produced);
+//		return from_source;
+//	}
 
 
 	while (spot < Produces.length()) {
-		mana produced(to_string(Produces[spot]), ID);
-		
+		mana produced(Produces[spot], ID);
+		DB("mana made " << produced.get_produced(), -1);	
 		from_source.push_back(produced);
 		spot++;
 	}

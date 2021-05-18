@@ -1,3 +1,4 @@
+#include "Debug.h"
 #include "mana.h"
 #include <string>
 #include <ostream>
@@ -11,13 +12,22 @@
 	string mana::get_options(){ return options;}
 	string mana::get_source(){ return source;}
 
-	mana::mana(string o, string from){
-		options = o;
+	mana::mana(string source_options, string from){
+		options = source_options;
 		source = from;
-		if(o.length() == 1)
-			produced = o[0];
+		DB("options size " << source_options.length(), -1);
+		DB("Options check " << options, -1);
+		if(source_options.length() == 1)
+			produced = source_options[0];
 		else
 			produced = '0';
+	}
+	
+	mana::mana(char source_produced, string from){
+		options = source_produced;
+		source = from;
+		DB("Options check " << options, -1);
+		produced = source_produced;
 	}
 
 	void mana::set_produced(char symbol){
@@ -36,9 +46,9 @@
 
 	ostream& operator<<(ostream& os, const mana& m){
 		if(options.length() == 1)
-			os << produced << " by " << source;
+			os << m.produced << " by " << m.source;
 		else
-			os << produced << " by " << source << " that produces " << options;
+			os << m.produced << " by " << m.source << " that produces " << m.options;
 			
 		return os;
 	}
