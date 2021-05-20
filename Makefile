@@ -1,23 +1,34 @@
 CXX = clang++
-CXXFLAGS = -g -Wall
+WARNINGS    = -Wall -Werror
+DEBUG_FLAGS = -g
+CXXFLAGS = $(WARNINGS) $(DEBUG_FLAGS) 
 
-Main.bin: Main.cpp card.o actions.o mana.o
-	$(CXX) -o Main.bin $(CXXFLAGS) Main.cpp card.o actions.o mana.o  -lm -lX11
+HEADERS = $(wildcard *.h)
+HPPEADERS = $(wildcard *.hpp)
+OBJECTS = $(HEADERS:%.h=%.o) $(HPPEADERS:%.h=%.o)
 
-# Add whatever additional files and rules here, and also
-# # in the final linking rule above.
-#
-# rd_direct.o: rd_direct.cc rd_direct.h
-# 	$(CXX) $(CXXFLAGS) -c rd_direct.cc
-#
-mana.o: mana.cpp mana.h
-	$(CXX) $(CXXFLAGS) -c mana.cpp
+Main.bin: Main.o $(OBJECTS)
+	$(CXX) $(CXXFLAGS) -o $@ $^
 
-actions.o: actions.cpp actions.h
-	$(CXX) $(CXXFLAGS) -c actions.cpp
-#
-card.o: card.cpp card.h
-	$(CXX) $(CXXFLAGS) -c card.cpp
-#
+##
+# Code to check for `#include' statements.
+##
+DEPDIR := .dep
+$(DEPDIR): ; mkdir $@
+.PRECIOUS: $(DEPDIR)/%.d
+$(DEPDIR)/%.d: %.cpp | $(DEPDIR)
+	@set -e; rm -f $@; \
+	$(CC) -MM $(CXXFLAGS) $< -MF $@.$$$$; \
+	sed 's,\($*\)\.o[ :]*,\1.o $@ : ,g' < $@.$$$$ > $@; \
+	rm -f $@.$$$$
+$(DEPDIR)/%.d: %.c | $(DEPDIR)
+	@set -e; rm -f $@; \
+	$(CC) -MM $(CXXFLAGS) $< -MF $@.$$$$; \
+	sed 's,\($*\)\.o[ :]*,\1.o $@ : ,g' < $@.$$$$ > $@; \
+	rm -f $@.$$$$
+%.o: .dep/%.d
+DEPFILES := $(OBJECTS:%.o=$(DEPDIR)/%.d) $(DEPDIR)/Main.d
+include $(DEPFILES)
+
 clean:
 	-rm *.o Main.bin
