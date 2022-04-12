@@ -37,8 +37,10 @@ LIBS          =
 LDFLAGS       = $(shell pkg-config --libs $(LIBS)) -ltinfo 
 
 all: card_parse
-json_test: card_parse.o
+card_parse: card_parse.o card.o Debug.h
 	$(CXX) $(CXXFLAGS) -o $@ $^
+
+
 
 ##
 # Pseudo-target to remove the files made by this Makefile

@@ -13,6 +13,26 @@ using std::to_string;
 using std::vector;
 
 card::card() {}
+
+void card::set_card(string name, int mana_value, string cost, vector<string> card_types, string oracle, string p, string t){
+	ID = name;
+	CMC = mana_value;
+	Cost = cost;
+	Type = card_types;
+	Oracle_text = oracle;
+	Power =p;
+	Toughness = t;
+	Mode = 'U';
+	Enters = 'U';
+	Produces = "-";
+
+	//put in call to parser functions here for 
+	//	Enters and Mode
+	//	Produces
+} 
+
+
+/**
 void card::set_card(string input) {
 	//		string input = "M L 0 U R";
 	vector<string> parts;
@@ -60,6 +80,8 @@ int card::check_Type() {
 	// debug message
 	return -1;
 }
+*/
+
 
 int card::check_Enters() {
 	if (Enters != 'U' && Enters != 'T') {
@@ -69,21 +91,30 @@ int card::check_Enters() {
 	return 0;
 }
 
+//TODO  this needs to take into acount that cost is now "{symbol}{symbol}..."
+
+
 vector<char> card::parse_Cost() {
 	vector<char> costs;
-	int spot = 0;
-	while (spot < Cost.length()) {
-		costs.push_back(Cost[spot]);
-		spot++;
-	}
+//	int spot = 0;
+//	while (spot < Cost.length()) {
+//		costs.push_back(Cost[spot]);
+//		spot++;
+//	}
 	return costs;
 }
 
-//string card::get_ID(){return ID;}
+
+//TODO  rework based on oracle text
+//TODO figure out why make is giving a "undefined referance to mana::mana(char ..."
+// commented out due compiler error and not used at this poitn
+
+
+/**
 
 vector<mana> card::parse_Produces() {
 	vector<mana> from_source;
-	int spot = 0;
+	unsigned int spot = 0;
 //	if(Produces.find('_')>-1){
 //		mana produced(Produces, ID);
 //		from_source.push_back(produced);
@@ -100,10 +131,26 @@ vector<mana> card::parse_Produces() {
 		return from_source;
 }
 
-char card::get_ECost() { return effect_cost; }
-string card::get_Effect() { return effect; }
-int card::get_CMC() { return Cost.length(); }
-char card::get_Type() { return Type; }
+**/
+
+
+//char card::get_ECost() { return effect_cost; }
+//string card::get_Effect() { return effect; }
+
+int card::get_CMC() { return CMC; }  //changed
+
+//char card::get_Type() { return Type; }
+
+vector<string> card::get_Type() {return Type;} //changed
+
+void card::set_ID(int num){
+	if(ID.find('_') != string::npos){
+		int identifier = ID.find('_');
+		ID = ID.substr(0,identifier);
+	}
+	ID = ID + "_" + to_string(num);
+}
+
 string card::get_ID() { return ID; }
 string card::get_Produces() { return Produces; }
 char card::get_Enters() { return Enters; }
@@ -115,15 +162,19 @@ void card::print_Card() {
 		cout << "ID not there       ";
 		return;
 	}
-	cout << ID + " " + Type + " ";
-	vector<char> cost = parse_Cost();
-	for (auto a : cost) {
-		cout << to_string(a);
-	}
-	cout << " " + Cost + "     ";
+	cout << ID + " " + Mode + "    ";
 }
 
 ostream& operator<<(ostream& os, const card& cd) {
-	return (os << cd.ID + " " + cd.Type + " " + cd.Cost + " " + cd.effect_cost +
-	                  " " + cd.effect + " " + cd.Mode + "    ");
+
+	string type_line;
+	for(unsigned int t = 0; t < cd.Type.size(); t++){
+		type_line = type_line + cd.Type[t];
+		if( t+1 != cd.Type.size() )
+			type_line = type_line + " ";
+	}
+	if(cd.Power == "")
+		return (os << cd.ID + " " + to_string(cd.CMC) + " " + cd.Cost + " " + type_line + " " + cd.Oracle_text + "        ");
+	else
+		return (os << cd.ID + " " + to_string(cd.CMC) + " " + cd.Cost + " " + type_line + " " + cd.Oracle_text + " " + cd.Power + "/" + cd.Toughness  +  "        ");
 }

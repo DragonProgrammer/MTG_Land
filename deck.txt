@@ -1,0 +1,3 @@
+Goblin Hero;4
+Forest ;10
+Simic Locket; 3

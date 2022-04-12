@@ -39,7 +39,7 @@
 //			return true;
 		if(produced == want)
 			return true;
-		if(options.find(want) > -1)
+		if(options.find(want) != string::npos)
 			return true;
 		return false;
 	}
