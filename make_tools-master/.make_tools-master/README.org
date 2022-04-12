@@ -1,0 +1,11 @@
+I program a lot in Make, this is a set of libraries I have created.
+
+* Installation
+	Clone this as a submodule and add the appropriate =include
+	$(wildcard *.make)= to your Makefile.
+
+* Known Problems
+	I want to be able to call this library as it's own program, from any
+	other script or make file.  This means that the path of the scrip
+	will be fairly variable.  Learn how to check with the shell what the
+	acual path is; and, find a way to ...

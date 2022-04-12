@@ -641,9 +641,11 @@ void turn_report();
  * 	The functions that determin the order things happen in
  *********************************************************************************************/
 float actions::average_for_deck(vector<card> input) {
-	int total_runs = 1; //TODO later make this changeable by input
+	int total_runs = 10; //TODO later make this changeable by input
 	int total_turns = 0;
 	int failed_games = 0; //TODO posiblby make this an extern so i can output it in report
+	
+	DB("In Average function", 1);
 	for (int run = 0; run < total_runs; run++) {
 		int turns = game_loop(input);
 		if(turns == 0){
@@ -693,7 +695,7 @@ int actions::game_loop(vector<card> input) {
 		DB("\nFIeld 4: " + to_string(field.size()), -1);  //TODO update these DB statements to include optional mana
 
 		// check if played last card with land
-		int land_options = land_search();
+	//	int land_options = land_search();
 		DB("\nFIeld 5: " + to_string(field.size()), -1);  //TODO update these DB statements to include optional mana
 		int end_check = play_Land();
 		if (end_check == -1) DB( "no lands to play this turn", 5);
