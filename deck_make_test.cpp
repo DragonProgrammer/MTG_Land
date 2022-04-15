@@ -26,14 +26,23 @@ struct card_listing {
 };
 
 
-vector<card_listing> make_deck_list(string deck_file){
+int main() {
 
 // make the file streams	
-	ifstream deck(deck_file);  // deck list
+	ifstream deck("deck.txt");  // deck list
+	ifstream ifs("AtomicCards.json");  // card database
+	ofstream list("list.txt");  // output log
+
+
+// get the json
+	json mtg = json::parse(ifs);
+	json mtgcards = mtg["data"];
+
 //create a  card list
 //
 //Variable declarations
 
+	card cdata;
 
 	string deck_line;
 	string card_name;
@@ -45,6 +54,7 @@ vector<card_listing> make_deck_list(string deck_file){
 //	vector<card_listing> deck_list;
 	
 	vector<card_listing> card_list;
+	vector<card> deck_test;
 
 	while( getline( deck, deck_line ) ) {
 		if(deck_line.length() < 2 ) // intput sanitation: empty line
@@ -64,8 +74,12 @@ vector<card_listing> make_deck_list(string deck_file){
 		card_name = deck_line.substr(0, split_loc);  // extract name
 		amount_str = deck_line.substr(split_loc + 1);  //extract number
 
-		boost::algorithm::trim(card_name);  //input sanitation: trimming
+		cout << "card name = " << card_name << "; Amount = " << amount_str << endl;
 
+	
+		boost::algorithm::trim(card_name);
+
+//		cout << "trim test: |" << card_name <<"|"<<endl;
 		try{
 		deck_amount = stoi(amount_str);
 		}
@@ -74,36 +88,27 @@ vector<card_listing> make_deck_list(string deck_file){
 			continue;
 		}
 
-//make card list item
+//		cout << "Amount check: " << deck_amount << endl << endl;
+	
 		card_for_deck.name = card_name;
 		card_for_deck.count = deck_amount;
 
-		card_list.push_back(card_for_deck); // add to decklist
+
+		card_list.push_back(card_for_deck);
 	}
 
-	return card_list;
-}
+// get card data
 
-vector<card> create_deck( vector<card_listing> deck_list ){
 
-//create json stream
-	ifstream ifs("AtomicCards.json");  // card database
+	for(unsigned int c = 0; c < card_list.size(); c++){
 
-// get the json
-	json mtg = json::parse(ifs);
-	json mtgcards = mtg["data"];
-
-	vector<card> working_deck;
-	card cdata;
-
-	for(unsigned int c = 0; c < deck_list.size(); c++){
-
-		if( !mtgcards.contains( deck_list[c].name ) ){   //input sanitation: spelling error
-			cout << endl << deck_list[c].name << "  is not a card" << endl;
+		if( !mtgcards.contains( card_list[c].name ) ){   //input sanitation: spelling error
+			cout << endl << card_list[c].name << "  is not a card" << endl;
 			continue;
 		}
 
-		json mtgcard = mtgcards[ deck_list[c].name ];
+		json mtgcard = mtgcards[ card_list[c].name ];
+//print out the data
 		
 
 	//card element variable declaration
@@ -116,7 +121,9 @@ vector<card> create_deck( vector<card_listing> deck_list ){
 		string t;
 		vector<string> types;
 
-//data assigning
+		cout <<  endl <<  "Name:  "  << mtgcard[0]["name"] << endl;
+
+
 
 		if (mtgcard[0]["name"] != NULL)
 			name = mtgcard[0]["name"];
@@ -136,36 +143,41 @@ vector<card> create_deck( vector<card_listing> deck_list ){
 		if (!mtgcard[0]["toughness"].is_null())
 			t = mtgcard[0]["toughness"];
 		DB("Added toughness", -4);		
+
+
+
+		cout << endl << "CMC:     " << mtgcard[0]["manaValue"] <<endl;
+		cout << "Mana Cost:     "   << mtgcard[0]["manaCost"] <<endl;
+
 		types = mtgcard[0]["types"].get<std::vector<string>>();
+	//	cout << "Types:   ";
+	//	for(unsigned int t = 0; t < types.size(); t++)
+	//		cout << types[t] << "     ";
+	//	cout << endl;
+		cout << "Text:   "  << mtgcard[0]["text"] << endl;
+	//	cout << endl << "Power;    " << mtgcard[0]["power"] << endl;
+	//	cout << "Toughness:    " << mtgcard[0]["toughness"] << endl;
 
+		DB("recorded CMC: " +to_string(mana_value), -5);
+		DB("recorded cost: " + cost, -5);
 
-//create card
-		cdata.set_card(name, mana_value, cost, types, oracle, p, t);
+		int mana_to_int = int(mana_value);
 
-//add amount of cards to deck
-		for(int dc = 1; dc <= deck_list[c].count; dc++){
+		cdata.set_card(name, mana_to_int, cost, types, oracle, p, t);
+
+	//	cout << cdata;
+
+		for(int dc = 1; dc <= card_list[c].count; dc++){
 			cdata.set_ID(dc);
-			working_deck.push_back(cdata);
+			deck_test.push_back(cdata);
 		}
 
+
+		cout << "Number in deck: " << card_list[c].count << endl;
+
 	}
 
-	return working_deck;
-}
-
-
-int main() {
-
-	string deck_file = "deck.txt";
-	vector<card_listing> sample_list = make_deck_list(deck_file);
-	vector<card> sample_deck = create_deck(sample_list);
-
-	for(unsigned int c = 0; c < sample_deck.size(); c++ ){
-		sample_deck[c].parse_Oracle();
-		cout << sample_deck[c] << endl;
-	}
-
+	for(unsigned int d = 0; d < deck_test.size(); d++)
+		cout << deck_test[d] << endl;
 	return 0;
 }
-
-// get card data

@@ -1,3 +1,5 @@
 Goblin Hero;4
 Forest ;10
 Simic Locket; 3
+Sky Diamond; 2
+Evolving Wilds; 1

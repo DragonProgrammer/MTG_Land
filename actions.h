@@ -58,10 +58,12 @@ class actions{
 
 	int check_mana(vector<char> mana_cost, char flag); //need to update
 
+	// shuffle initial deck
 	void set_deck(vector<card> from_main);
 
 	int remove_card(card to_remove, vector<card> &remove_from);
 
+	// print a given vector of cards
 	void print_selection(vector<card> to_output);
 
 	void set_initial_Hand();

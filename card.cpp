@@ -32,75 +32,19 @@ void card::set_card(string name, int mana_value, string cost, vector<string> car
 } 
 
 
-/**
-void card::set_card(string input) {
-	//		string input = "M L 0 U R";
-	vector<string> parts;
-	stringstream parse(input);
-	string partial;
-	while (getline(parse, partial, ' ')) {
-		for(auto & c: partial) c = toupper(c);
-		parts.push_back(partial);
-	}
-	ID = parts[0];
-	if (parts[1].size() > 1) {
-		//			DB("Type biger then char");
-		return;
-	}
-	Type = toupper(parts[1].at(0));
-	if (check_Type() != 0) return;
-	Cost = parts[2];
-	if (parts[3].size() > 1) {
-		//			DB("Enters biger then char");
-		return;
-	}
-	Enters = toupper(parts[3].at(0));
-	if (check_Enters() != 0) return;
-
-	Produces = parts[4];
-	if (parts.size() < 7) {
-		DB("Did not get all parts", 0);
-		exit(0);
-	}
-	if (parts[5].length() < 1) {
-		DB("Did not read in effect cost", 0);
-		exit(0);
-	}
-	effect_cost = toupper(parts[5].at(0));
-	effect = parts[6];
-	Mode = 'N';  // for none
-	             //	DB(print_Card());
-}
-
-int card::check_Type() {
-	if (Type == 'L' || Type == 'P' || Type == 'S') {
-		return 0;
-	}
-	//	DB("Wrong Value in Type   " << Type);
-	// debug message
-	return -1;
-}
-*/
-
-
-int card::check_Enters() {
-	if (Enters != 'U' && Enters != 'T') {
-		//  DB("Wrong Value in Enters   " << Enters);
-		return -1;
-	}
-	return 0;
-}
-
-//TODO  this needs to take into acount that cost is now "{symbol}{symbol}..."
-
-
+//---------------------------------------------
+//create a vector of mana cost from the cards Cost variable
+//	does not work for hybrid mana costs
+//	** UPDATED FOR NEW FORMAT **
+//--------------------------------------------------------
 vector<char> card::parse_Cost() {
 	vector<char> costs;
-//	int spot = 0;
-//	while (spot < Cost.length()) {
-//		costs.push_back(Cost[spot]);
-//		spot++;
-//	}
+	unsigned int spot = 0;
+	while (spot < Cost.length()) {
+		if(Cost[spot] != '{' && Cost[spot] != '}') //bypass the symbol seperaters
+		costs.push_back(Cost[spot]);
+		spot++;
+	}
 	return costs;
 }
 
@@ -137,7 +81,6 @@ vector<mana> card::parse_Produces() {
 //char card::get_ECost() { return effect_cost; }
 //string card::get_Effect() { return effect; }
 
-int card::get_CMC() { return CMC; }  //changed
 
 //char card::get_Type() { return Type; }
 
@@ -151,12 +94,147 @@ void card::set_ID(int num){
 	ID = ID + "_" + to_string(num);
 }
 
+void card::set_Mode(char New_Mode) { Mode = New_Mode; }
+//******************************************
+// Data returning functions
+// ******************************************
+
+
 string card::get_ID() { return ID; }
 string card::get_Produces() { return Produces; }
 char card::get_Enters() { return Enters; }
-void card::set_Mode(char New_Mode) { Mode = New_Mode; }
+int card::get_CMC() { return CMC; }  //changed
 
 char card::get_Mode() { return Mode; }
+//----------------------------------------
+//gets the card name from the ID string
+//----------------------------------------
+string card::get_Name(){
+	string Name;
+	if(ID.find('_') != string::npos){
+		int identifier = ID.find('_');
+		Name = ID.substr(0,identifier);
+	}
+	return Name;
+}
+	
+
+
+//************************************************************
+//Parsing functions
+//******************************************************************
+
+void card::parse_Oracle(){
+	parse_text_enters();
+	trim_oracle();
+	parse_text_produces();
+	trim_oracle();
+	parse_land_search();
+	trim_oracle();
+}
+
+
+void card::parse_land_search(){
+	string effect_string = "Search your library for a basic land card, put it onto the battlefield tapped, then shuffle.";
+	string cost_line = "{T}, Sacrifice " + get_Name() + ": ";
+	
+	int effect_start;
+	if( effect_start = Oracle_text.find( effect_string ) != string::npos)
+		Effect = "Search Basic to field tapped";
+	int cost_len = cost_line.length();
+	if( int cost_start = Oracle_text.find( cost_line) != string::npos ){
+		DB("Cost start: " + to_string(cost_start), -5);
+		DB("Comparison COst start: " + to_string(effect_start - cost_len),-5);
+		if (cost_start == (effect_start-cost_len) ){
+			Effect_cost = "Tap Sacrifice This";
+			DB("Same effect", -5);
+		}
+	}
+}
+
+
+
+
+//-----------------------------------------------
+//trimes the new line char from the begining of edited oracle text
+//	als trims reminder text braccets if nothing between
+//-------------------------------------------------------------
+void card::trim_oracle(){
+	if(Oracle_text[0] == '\n'){
+		Oracle_text= Oracle_text.substr(1);
+		DB("Trimmed text: " + Oracle_text, -4);
+	}
+	if(int reminder = Oracle_text.find("()") != string::npos){
+		Oracle_text.replace(reminder-1, 2, "");
+		DB("Trimmed text: " + Oracle_text, -4);
+	}
+		
+}
+
+
+//--------------------------------------------------
+//checks the card to see if it should enter tapped
+//	searches the cards text for "card_name enters the battlefield tapped"
+//
+//	does not work with conditional enters TODO
+//-----------------------------------------------
+void card::parse_text_enters(){
+	string to_find = get_Name() + " enters the battlefield tapped.";
+	DB(to_find, -4);
+	if (Oracle_text.find(to_find) != string::npos){
+		Enters = 'T';
+		DB("Enters tapped", -4);
+		int len = to_find.length();
+		DB(to_find + "is char in len: " + to_string(len), -4);
+		int start = Oracle_text.find(to_find);
+		DB("Old Oracle text: " + Oracle_text,-4);
+		Oracle_text.replace(start, len, "");
+		DB("New Oracle text: " + Oracle_text, -4);
+		//TODO add function that removes text from oracle
+	}
+}
+
+//-------------------------------------------------------------
+//checks card for mana producing abilities
+//	search the card text for "T: Add"
+//	then looks for the position of next period
+//	the text between is the card's Produces string
+//------------------------------------------------------------
+void card::parse_text_produces(){
+	string to_find = "{T}: Add ";
+	DB(to_find, -2);
+	if (Oracle_text.find(to_find) != string::npos){
+		int ability_start = Oracle_text.find(to_find);
+		int fixxer_check = ability_start-1;
+		//check for "is first thing", or if the char before it is new line or indicatoer of reminder text
+		if (ability_start == 0 || Oracle_text[fixxer_check] == '\n' || Oracle_text[fixxer_check] == '(' ){
+			DB("in produces check", -4);
+			string sub_Oracle = Oracle_text.substr(ability_start);
+			DB(sub_Oracle,-4);
+			int period_at = sub_Oracle.find(".");
+			DB("Period found: " + to_string(period_at), -4);
+			string mana_string = sub_Oracle.substr(9,period_at-9);
+			Produces = mana_string;
+			DB(mana_string, -4);
+// remove string from oracle
+			int len = 9 + mana_string.length() + 1;
+			DB("Old Oracle text: " + Oracle_text,-5);
+			Oracle_text.replace(ability_start, len, "");
+			DB("New Oracle text: " + Oracle_text,-5);
+		
+
+		}
+		else
+			DB("Fixxer found", -4);
+	}
+}
+
+//*************************************************
+//Data output functions
+//	these print card data
+//******************************************************i
+
+
 void card::print_Card() {
 	if (ID.length() < 1) {
 		cout << "ID not there       ";
@@ -164,6 +242,8 @@ void card::print_Card() {
 	}
 	cout << ID + " " + Mode + "    ";
 }
+
+
 
 ostream& operator<<(ostream& os, const card& cd) {
 

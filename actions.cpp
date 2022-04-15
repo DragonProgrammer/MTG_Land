@@ -68,6 +68,15 @@ void actions::set_initial_Hand() {
 	initial_hand = hand;
 }
 
+
+//-----------------------------------------------------
+// Simulate untap step
+// 	passes by referance in_play cards to make everything untapped
+// Empties mana pool
+// 	TODO once phases are implemented this should be its own function
+// increments turn counter
+// sets per turn flags to 0
+// -------------------------------------------------------
 void actions::new_turn(vector<card>& in_play) {
 	for (int i = 0; i < in_play.size(); i++) {
 		card temp = in_play[i];
@@ -89,8 +98,13 @@ int actions::draw_card() {
 		return -1;
 }
 
+//-----------------------------------------------------------------------------
 //this function simulates terimorphic expance
 //TODO split function so there is an effect search that looks for terimorfic and other sac to find land(s) and the actual search
+//
+//-----------------------------------------------------------------------------
+//TODO this function needs to be updated for new card style
+//-----------------------------------------------------------------------------
 int actions::land_search() {
 	for (auto card_on_field : field) {
 		if (card_on_field.get_ECost() == 'S' &&
@@ -123,10 +137,18 @@ int actions::land_search() {
 //	give priority to colors from cards that need only 1 more mana, and then number of cards that need that color
 //	if tied decide with cards that need 2 manna of a color
 
+
+
+//-------------------------------------------------------------------------------------------
 //this function returns a land card from a  given a card vector (hand or deck) based on a vector of mana need
 //TODO add 2 char flags to this for cards that search for only a basic, basic or gate, ext.
 //	posibility this sifting may be done in another function whose results are passed to this
 //TODO add subtype to card traits
+//---------------------------------------------------------------------------------------
+//
+//-----------------------------------------------------------------------------
+//TODO this function needs to be updated for new card style
+//-----------------------------------------------------------------------------
 card actions::find_land(vector<card> lands) {
 	vector<string> deciding_vector = compute_need();
 	DBV(deciding_vector, -1);
@@ -356,6 +378,11 @@ card actions::biggest_thing_playable() {
 
 // to check if the right mana is avalable, also functions as paying mana
 //TODO move flag check so we have 1 for loop, need to make sure optional mana works first
+//TODO work in way to do hybrid mana, possibly from vector<char> to vector<string> or vector<mana>
+//
+//-----------------------------------------------------------------------------
+//TODO this function needs to be updated for new card style
+//-----------------------------------------------------------------------------
 int actions::check_mana(vector<char> mana_cost, char flag) {
 	vector<mana> temp_pool = usable_mana;	// incase of not right mana
 	vector<mana> temp_optional = mana_from_optional_sources;
@@ -489,7 +516,14 @@ vector<string> actions::compute_need() {
 	return descending_need_order;
 }
 
+//-----------------------------------------------------------------------
 // Parses the cost of a spell into what is needed
+// 	does not currently work with hybrid mana
+//
+// given a vector<char> representing the mana costs
+// returns a vector<int> of mana needs by color
+// 	order R, W, B, U, G, C
+//------------------------------------------------------------------------
 vector<int> actions::mana_cost_numbers(vector<char> mana_vector) {
 	vector<int> numbers = {0, 0, 0, 0, 0, 0};  // {R, W, B, U, G, C}
 	for (auto m : mana_vector) {
@@ -519,9 +553,10 @@ vector<int> actions::mana_cost_numbers(vector<char> mana_vector) {
 	return numbers;
 }
 
-
+//-----------------------------------------------------------------------------------
 // tallys how many mana sources there are, should be called before anything played
 // 	possible thought making this number part of gameState 
+// ---------------------------------------------------------------------------------	
 int actions::compute_sources(){
 	mana_sources = 0;
 	for(auto c : field){
@@ -533,6 +568,7 @@ int actions::compute_sources(){
 }
 
 
+//----------------------------------------------------------------------------------
 // returns the percent of sources that can produce a given color of mana
 //    anther number for game_state?
 vector<float> actions::compute_source_vector(){

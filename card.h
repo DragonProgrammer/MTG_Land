@@ -11,7 +11,8 @@ class card{
 	string Cost;
 	char Enters;
 
-	string effect;
+	string effect; // this presumes that there is only one effect besides manap
+	string effect_cost;
 	char Mode;
 
 //-----------------------------------------------------------
@@ -50,14 +51,19 @@ class card{
 	
 	vector<string> get_Type();
 
+	void parse_Oracle();
+	void parse_text_enters();
+	void parse_text_produces();
+	void trim_oracle();
+
+	string get_Name();
+
 //---------------------------------------------------
 
 //----------------------------------------------------
 //   CHANGED FUNCTIONS
 //-------------------------------------------------------
 
-	int check_Type();
-	int check_Enters();
 	vector<char> parse_Cost();
 //	vector<mana> parse_Produces();// need to rework for optional ie R or G
 	void print_Card();
@@ -67,6 +73,8 @@ friend ostream& operator<<(ostream &os, const card &cd);
 //   DEPRICATED FUNCIONS
 //--------------------------------------------------
 
+//	int check_Enters();
+//i	int check_Type();
 //	void set_card(string input); // depricated
 //	string get_Effect();
 //	char get_ECost();
