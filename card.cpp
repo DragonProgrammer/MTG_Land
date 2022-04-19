@@ -2,6 +2,8 @@
 #include <iostream>
 #include <sstream>
 #include <vector>
+#include <algorithm>
+#include <boost/algorithm/string.hpp> // for split function
 #include "card.h"
 #include "mana.h"
 #include "effect.h"
@@ -11,15 +13,16 @@ using std::string;
 using std::stringstream;
 using std::to_string;
 using std::vector;
+using std::find;
 
 card::card() {}
 
-void card::set_card(string name, int mana_value, string cost, vector<string> card_types, vector<string> card_super_types, vector<string> card_sub_types; string oracle, string p, string t){
+void card::set_card(string name, int mana_value, string cost, vector<string> card_types, vector<string> card_super_types, vector<string> card_sub_types, string oracle, string p, string t){
 	ID = name;
 	CMC = mana_value;
 	Cost = cost;
-	Super_Types = card_super_types;
-	Sub_Types = card_sub_types;
+	Super_Type = card_super_types;
+	Sub_Type = card_sub_types;
 	Type = card_types;
 	Oracle_text = oracle;
 	Power =p;
@@ -279,6 +282,35 @@ void card::parse_text_produces(){
 //
 int card::is_of_Type(string query){
 	vector<string> query_types;
+       	boost::split(query_types, query, boost::is_any_of(" "));
+	DB("Query types Vector:", -5);
+	DBV(query_types, -5);
+
+	unsigned int full_query_flag = 0;
+
+	for(auto t : query_types){
+		
+		if( find(Super_Type.begin(), Super_Type.end(), t)  != Super_Type.end() ){
+			full_query_flag++;
+			continue;
+		}
+		if( find(Type.begin(), Type.end(), t)  != Type.end() ){
+			full_query_flag++;
+			continue;
+		}
+		if( find(Sub_Type.begin(), Sub_Type.end(), t)  != Sub_Type.end() )
+			full_query_flag++;
+	}
+	if (full_query_flag == query_types.size()){
+		DB( ID + " is a " + query, -5);
+		return 1;
+	}
+	DB( ID + " is not a " + query, -5);
+	return 0;
+}
+
+	       			       
+
 
 
 

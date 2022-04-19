@@ -48,7 +48,7 @@ class card{
 //___________________________________________________________________________
 
 
-	void set_card(string name, int mana_value, string cost, vector<string> card_types, string oracle, string p, string t);
+	void set_card(string name, int mana_value, string cost, vector<string> card_types, vector<string> card_super_types, vector<string> card_sub_types, string oracle, string p, string t);
 	void set_ID(int num);  // this will add the card number to the end to diferenciate cards in deck
 	
 	vector<string> get_Type();

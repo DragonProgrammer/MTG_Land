@@ -116,6 +116,8 @@ vector<card> create_deck( vector<card_listing> deck_list ){
 		string p;
 		string t;
 		vector<string> types;
+		vector<string> super;
+		vector<string> sub;
 
 //data assigning
 
@@ -138,10 +140,12 @@ vector<card> create_deck( vector<card_listing> deck_list ){
 			t = mtgcard[0]["toughness"];
 		DB("Added toughness", -4);		
 		types = mtgcard[0]["types"].get<std::vector<string>>();
+		super = mtgcard[0]["supertypes"].get<std::vector<string>>();
+		sub = mtgcard[0]["subtypes"].get<std::vector<string>>();
 
 
 //create card
-		cdata.set_card(name, mana_value, cost, types, oracle, p, t);
+		cdata.set_card(name, mana_value, cost, types, super, sub, oracle, p, t);
 
 //add amount of cards to deck
 		for(int dc = 1; dc <= deck_list[c].count; dc++){
@@ -164,8 +168,9 @@ int main() {
 	for(unsigned int c = 0; c < sample_deck.size(); c++ ){
 		sample_deck[c].parse_Oracle();
 		cout << sample_deck[c] << endl;
-		if(sample_deck[c].get_effect().get_Eff_Type() != "-")
-			cout << " Card Effect is:  "  << sample_deck[c].get_effect();
+		sample_deck[c].is_of_Type("Basic Land");
+	//	if(sample_deck[c].get_effect().get_Eff_Type() != "-")
+	//		cout << " Card Effect is:  "  << sample_deck[c].get_effect();
 
 
 	}
