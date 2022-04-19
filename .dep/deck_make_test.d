@@ -38,4 +38,5 @@ deck_make_test.o .dep/deck_make_test.d : deck_make_test.cpp Debug.h \
  json/include/nlohmann/detail/conversions/to_chars.hpp \
  json/include/nlohmann/ordered_map.hpp \
  json/include/nlohmann/detail/macro_unscope.hpp \
- json/include/nlohmann/thirdparty/hedley/hedley_undef.hpp card.h mana.h
+ json/include/nlohmann/thirdparty/hedley/hedley_undef.hpp card.h mana.h \
+ effect.h

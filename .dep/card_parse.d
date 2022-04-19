@@ -38,4 +38,5 @@ card_parse.o .dep/card_parse.d : card_parse.cpp Debug.h json/include/nlohmann/js
  json/include/nlohmann/detail/conversions/to_chars.hpp \
  json/include/nlohmann/ordered_map.hpp \
  json/include/nlohmann/detail/macro_unscope.hpp \
- json/include/nlohmann/thirdparty/hedley/hedley_undef.hpp card.h mana.h
+ json/include/nlohmann/thirdparty/hedley/hedley_undef.hpp card.h mana.h \
+ effect.h

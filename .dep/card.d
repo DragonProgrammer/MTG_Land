@@ -1,1 +1,1 @@
-card.o .dep/card.d : card.cpp Debug.h card.h mana.h
+card.o .dep/card.d : card.cpp Debug.h card.h mana.h effect.h

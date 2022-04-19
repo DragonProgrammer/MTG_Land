@@ -37,7 +37,7 @@ LIBS          =
 LDFLAGS       = $(shell pkg-config --libs $(LIBS)) -ltinfo 
 
 all: card_parse
-card_parse: card_parse.o card.o Debug.h
+card_parse: card_parse.o card.o Debug.h effect.o
 	$(CXX) $(CXXFLAGS) -o $@ $^
 
 
@@ -62,23 +62,23 @@ watch_target: .make_update
 LINK.o = $(LINK.cc)
 include $(wildcard *.make)
 
-
-.PHONY: clean_temps
-clean: clean_temps
-clean_temps:
-	-rm *.tmp
-	-rm .*.tmp
+#
+#.PHONY: clean_temps
+#clean: clean_temps
+#clean_temps:
+#	-rm *.tmp
+#	-rm .*.tmp
 
 .PHONY: clean_objects
 clean: clean_objects
 clean_objects:
 	-rm *.o
-
-.PHONY: clean_targets
-clean: clean_targets
-clean_targets:
-	-rm edgit
-	-rm *.dot
+#
+#.PHONY: clean_targets
+#clean: clean_targets
+#clean_targets:
+#	-rm edgit
+#	-rm *.dot
 
 
 ##
@@ -94,21 +94,21 @@ include $(DEPFILES)
 # Make a pseudo-target for the tests
 ##
 # Also, make a happy message at the end if they all passed.
-.PHONY: %.test
-.test.d/%: % | .test.d
-	./$<
-	touch $@
+#.PHONY: %.test
+#.test.d/%: % | .test.d
+#	./$<
+#	touch $@
 
-.PHONY: tests
-tests:
-	@$(MAKE) Message_Box MESSAGE="Tests Compleate" --no-print-directory
-watch_target: tests
-
-.PHONY: clean_tests
-clean: clean_tests
-clean_tests:
-	-rm .test.d -r
-	-rm *_test
+#.PHONY: tests
+#tests:
+#	@$(MAKE) Message_Box MESSAGE="Tests Compleate" --no-print-directory
+#watch_target: tests
+#
+#.PHONY: clean_tests
+#clean: clean_tests
+#clean_tests:
+#	-rm .test.d -r
+#	-rm *_test
 
 # Built the real target
 watch_all: all

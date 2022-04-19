@@ -3,6 +3,7 @@
 #include <vector>
 #include <string>
 #include "mana.h"
+#include "effect.h"
 using std::string;
 using std::vector;
 using std::ostream;
@@ -10,17 +11,18 @@ class card{
 	string ID;
 	string Cost;
 	char Enters;
-
-	string effect; // this presumes that there is only one effect besides manap
-	string effect_cost;
+	effect Card_effect;
 	char Mode;
 
 //-----------------------------------------------------------
 //     NEW OR CHANGED VARIABLES
 // changing card format to make later coding easier and reflect needs of new creation method
 // ___________________________________________________________
-
+	
 	string Oracle_text;
+
+	vector<string> Super_Type;
+	vector<string> Sub_Type;
 	vector<string> Type;
 	int CMC;
 	string Power;        // will need a function that makes these ints, in string type to deale with */*, */n, n/*
@@ -50,20 +52,28 @@ class card{
 	void set_ID(int num);  // this will add the card number to the end to diferenciate cards in deck
 	
 	vector<string> get_Type();
+	vector<string> get_Super_Type();
+	vector<string> get_Sub_Type();
+
 
 	void parse_Oracle();
 	void parse_text_enters();
 	void parse_text_produces();
+	void parse_text_land_search();
 	void trim_oracle();
 
+	int check_effect(string effect_querry);
 	string get_Name();
+
+	//tokonizes query and sees if parts are in the 3 types
+	int is_of_Type(string query);
 
 //---------------------------------------------------
 
 //----------------------------------------------------
 //   CHANGED FUNCTIONS
 //-------------------------------------------------------
-
+	effect get_effect();
 	vector<char> parse_Cost();
 //	vector<mana> parse_Produces();// need to rework for optional ie R or G
 	void print_Card();

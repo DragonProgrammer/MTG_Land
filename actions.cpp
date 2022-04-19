@@ -98,6 +98,42 @@ int actions::draw_card() {
 		return -1;
 }
 
+
+//----------------------------------------------------------------
+//This function checks if a given effect is on a card
+//--------------------------------------------------------------
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+//------------------------------------------------------------------
+//this function checks to see if there is a land search option avalable
+//	land search could come from:
+//		 lands like Evolving wilds  - curren implementation only so far
+//		 artifacts like travelers amulet  TODO
+//		 spells like rampent growth  TODO
+//		 creature ETB effects  TODO
+//----------------------------------------------------------------
+
+//int actions::search_available(){
+	
+
+
+
+
+
+
+
 //-----------------------------------------------------------------------------
 //this function simulates terimorphic expance
 //TODO split function so there is an effect search that looks for terimorfic and other sac to find land(s) and the actual search
@@ -107,10 +143,16 @@ int actions::draw_card() {
 //-----------------------------------------------------------------------------
 int actions::land_search() {
 	for (auto card_on_field : field) {
-		if (card_on_field.get_ECost() == 'S' &&
-		    card_on_field.get_Effect() == "Search" &&
+		//see if there is a search effect on the field, and that the cost is payable
+		//TODO add in mana cost
+		if (card_on_field.get_Effect().get_Eff_Type() == "Search" &&
+		    card_on_field.get_Effect().get_Eff_Cost().find("Tap") != string::npos &&
 		    card_on_field.get_Mode() == 'U') {
 			DB("found Land search", 0);
+			//determine if I am seraching for basic land
+			if(card_on_field.get_Effect().get_Eff_Target_Type().find("Basic") != string::npos)
+
+			//create a vector of land cards from deck
 			vector<card> lands_in_deck;
 			for (auto card_in_deck : deck) {
 				if (card_in_deck.get_Type() == 'L')

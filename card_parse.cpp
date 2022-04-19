@@ -5,6 +5,7 @@
 #include <string>
 #include <boost/algorithm/string/trim.hpp>
 #include "card.h"
+#include "effect.h"
 
 using std::string;
 using json = nlohmann::json;
@@ -163,6 +164,10 @@ int main() {
 	for(unsigned int c = 0; c < sample_deck.size(); c++ ){
 		sample_deck[c].parse_Oracle();
 		cout << sample_deck[c] << endl;
+		if(sample_deck[c].get_effect().get_Eff_Type() != "-")
+			cout << " Card Effect is:  "  << sample_deck[c].get_effect();
+
+
 	}
 
 	return 0;

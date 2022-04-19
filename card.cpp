@@ -4,7 +4,7 @@
 #include <vector>
 #include "card.h"
 #include "mana.h"
-
+#include "effect.h"
 using std::cout;
 using std::endl;
 using std::string;
@@ -14,10 +14,12 @@ using std::vector;
 
 card::card() {}
 
-void card::set_card(string name, int mana_value, string cost, vector<string> card_types, string oracle, string p, string t){
+void card::set_card(string name, int mana_value, string cost, vector<string> card_types, vector<string> card_super_types, vector<string> card_sub_types; string oracle, string p, string t){
 	ID = name;
 	CMC = mana_value;
 	Cost = cost;
+	Super_Types = card_super_types;
+	Sub_Types = card_sub_types;
 	Type = card_types;
 	Oracle_text = oracle;
 	Power =p;
@@ -25,6 +27,7 @@ void card::set_card(string name, int mana_value, string cost, vector<string> car
 	Mode = 'U';
 	Enters = 'U';
 	Produces = "-";
+	Card_effect = effect("-","-","-",0,"-","-","-");
 
 	//put in call to parser functions here for 
 	//	Enters and Mode
@@ -78,13 +81,7 @@ vector<mana> card::parse_Produces() {
 **/
 
 
-//char card::get_ECost() { return effect_cost; }
-//string card::get_Effect() { return effect; }
 
-
-//char card::get_Type() { return Type; }
-
-vector<string> card::get_Type() {return Type;} //changed
 
 void card::set_ID(int num){
 	if(ID.find('_') != string::npos){
@@ -106,6 +103,11 @@ char card::get_Enters() { return Enters; }
 int card::get_CMC() { return CMC; }  //changed
 
 char card::get_Mode() { return Mode; }
+
+vector<string> card::get_Type() {return Type;} //changed
+vector<string> card::get_Super_Type() {return Super_Type;} 
+vector<string> card::get_Sub_Type() {return Sub_Type;} 
+
 //----------------------------------------
 //gets the card name from the ID string
 //----------------------------------------
@@ -119,6 +121,8 @@ string card::get_Name(){
 }
 	
 
+effect card::get_effect(){return Card_effect;}
+
 
 //************************************************************
 //Parsing functions
@@ -129,27 +133,63 @@ void card::parse_Oracle(){
 	trim_oracle();
 	parse_text_produces();
 	trim_oracle();
-	parse_land_search();
+	parse_text_land_search();
 	trim_oracle();
 }
 
-
-void card::parse_land_search(){
+//-------------------------------------------------------------------
+//THis function parses the Oracle for land search
+//	it curently only does "rampant growth" and "evolving wilds"
+//-------------------------------------------------------------------	
+void card::parse_text_land_search(){
 	string effect_string = "Search your library for a basic land card, put it onto the battlefield tapped, then shuffle.";
-	string cost_line = "{T}, Sacrifice " + get_Name() + ": ";
+	string cost_line = "{T}, Sacrifice " + get_Name() + ":";
+
+	int search_flag = 0;
 	
-	int effect_start;
-	if( effect_start = Oracle_text.find( effect_string ) != string::npos)
-		Effect = "Search Basic to field tapped";
-	int cost_len = cost_line.length();
-	if( int cost_start = Oracle_text.find( cost_line) != string::npos ){
-		DB("Cost start: " + to_string(cost_start), -5);
-		DB("Comparison COst start: " + to_string(effect_start - cost_len),-5);
-		if (cost_start == (effect_start-cost_len) ){
-			Effect_cost = "Tap Sacrifice This";
-			DB("Same effect", -5);
-		}
+//declaration of variable to mach effect class
+	string E_Type = "-";
+	string E_Source;
+	string E_Targets;
+	int E_Numeric;
+	string E_Endpoint;
+	string E_State;
+	string E_Cost;	
+
+
+	size_t effect_start = Oracle_text.find(effect_string);  // needs to be of size_t in order to have npos
+	
+	DB("Oracle Text for " + ID + "      " + Oracle_text, -5);
+
+	if( effect_start != string::npos){
+		DB("In Search effect set-up", -5);
+		DB("", -5);
+		E_Type = "Search";
+       		E_Source = "Library";
+		E_Targets = "Basic Land";
+		E_Numeric = 1;
+		E_Endpoint = "Field";
+		E_State = "Tapped";
+		search_flag = 1;
+		DB("After declaration the recoreded state is: " + E_State, -4);  // had + not = as declaration
 	}
+
+	unsigned int cost_len = cost_line.length();
+	if( size_t cost_start = Oracle_text.find( cost_line) != string::npos  && E_Type != "-"){
+		DB("Cost start: " + to_string(cost_start), -4);
+		DB("Comparison COst start: " + to_string(effect_start - cost_len),-4);
+		if (cost_start == (effect_start-cost_len) ){
+			E_Cost = "Tap Sacrifice This";
+			DB("Same effect", -4);
+		}
+		//TODO add in mana cost check
+	}
+	DB("the recoreded state is: " + E_State, -4);
+	if( search_flag == 1 )
+		Card_effect = effect(E_Cost, E_Type, E_Source, E_Numeric, E_Targets, E_Endpoint, E_State);
+	else
+		Card_effect = effect("-","-","",0,"","","");
+	
 }
 
 
@@ -218,9 +258,9 @@ void card::parse_text_produces(){
 			DB(mana_string, -4);
 // remove string from oracle
 			int len = 9 + mana_string.length() + 1;
-			DB("Old Oracle text: " + Oracle_text,-5);
+			DB("Old Oracle text: " + Oracle_text,-4);
 			Oracle_text.replace(ability_start, len, "");
-			DB("New Oracle text: " + Oracle_text,-5);
+			DB("New Oracle text: " + Oracle_text,-4);
 		
 
 		}
@@ -228,6 +268,21 @@ void card::parse_text_produces(){
 			DB("Fixxer found", -4);
 	}
 }
+
+//*************************************************************
+//Comparison Functions
+//	These functions see if a card maches a given mechanic
+//		is_of_type
+//		is_castable_CMC_based //TODO
+//************************************************************
+//
+//
+int card::is_of_Type(string query){
+	vector<string> query_types;
+
+
+
+
 
 //*************************************************
 //Data output functions
