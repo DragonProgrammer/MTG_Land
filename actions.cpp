@@ -103,7 +103,7 @@ int actions::draw_card() {
 //This function checks if a given effect is on a card
 //--------------------------------------------------------------
 
-
+//TODO
 
 
 
@@ -138,10 +138,31 @@ int actions::draw_card() {
 //this function simulates terimorphic expance
 //TODO split function so there is an effect search that looks for terimorfic and other sac to find land(s) and the actual search
 //
+//TODO possibly turn into land_search( char flag )  to determine if i am doing land search from hand or from field
+//
+//--------------------------------------------------------------------------
+//Return Values
+//   1 = no land search found
+//   0 = all lands found
+//  -1 = no lands to find
+//  -2 = error happened in card removal from deck
+//  -3 = error happened in card removal from field //TODO
+//  -4 = found under the alotted lands //TODO  this should have some more reporting added to it
+//
 //-----------------------------------------------------------------------------
-//TODO this function needs to be updated for new card style
+// this function updated for new card style
 //-----------------------------------------------------------------------------
 int actions::land_search() {
+	int search_found_flag = 0;
+	string search_Target;  // this might become vector string
+	string land_Endpoint;
+	string land_State;
+	int Num_lands;
+
+	effect search_Effect;
+
+	card land_searcher;
+
 	for (auto card_on_field : field) {
 		//see if there is a search effect on the field, and that the cost is payable
 		//TODO add in mana cost
@@ -149,37 +170,85 @@ int actions::land_search() {
 		    card_on_field.get_Effect().get_Eff_Cost().find("Tap") != string::npos &&
 		    card_on_field.get_Mode() == 'U') {
 			DB("found Land search", 0);
-			//determine if I am seraching for basic land
-			if(card_on_field.get_Effect().get_Eff_Target_Type().find("Basic") != string::npos)
+			search_found_flag = 1;
+			land_searcher = card_on_field  //at this point is search_avalability function either add this card to found vector or just return this card
 
-			//create a vector of land cards from deck
-			vector<card> lands_in_deck;
-			for (auto card_in_deck : deck) {
-				if (card_in_deck.get_Type() == 'L')
-					lands_in_deck.push_back(card_in_deck);
+
+		//set up variable to determine effects of search
+			search_Effect = card_on_field.get_Effect();
+
+			search_Target = search_Effect.get_Eff_Target_Type();
+			land_Endpoint = search_Effect.get_Eff_Endpoint();
+			land_State = search_Effect.get_Eff_state();
+			Num_lands = search_Effect.get_Eff_Target_Numeric();
+			
+		}
+
+	}
+	if (search_found_flag == 0 )
+		return 1; // no land search found
+
+
+			//determine if I am seraching for basic land
+			//TODO iplement panaramas and shard convergence
+	if(search_target.find("Basic") != string::npos){
+				//create a vector of basic land cards from deck
+				vector<card> lands_in_deck;
+				for (auto card_in_deck : deck) {
+					if (card_in_deck.is_of_type(search_target)
+						lands_in_deck.push_back(card_in_deck);
 			}
 			if (lands_in_deck.size() > 0) {
-				card found_land = find_land(lands_in_deck);
-				field.push_back(found_land); // curently assumes that card goes to field
-				//TODO add flag that puts land in hand or field
-				field[field.size() - 1].set_Mode('T');
-				if (remove_card(found_land, deck) == -1) {
-					return -2;
-				}  // somethuing happeded that remved land from deck premachurly
-				return 0;
+
+				//TODO add found_land vector to implement Cultivate
+				
+			//	for(int l = 0; l < num_lands; l++){
+				int found_number = 0; // to make sure i find only Num_lands
+				while( lands_in_deck.size() > 0) {
+					card found_land = find_land(lands_in_deck);
+					
+						
+					found_number++
+					if(land_Endpoint == "Field"){
+						field.push_back(found_land);
+				       		if( land_State == "Tapped" )
+							field[field.size() - 1].set_Mode('T');
+						else
+							field[field.size() - 1].set_Mode('U');
+					}
+					if(land_Endpoint == "Hand" ){
+						hand.push_back(found_land);
+					}
+					if (remove_card(found_land, deck) == -1) {
+						return -2;
+					}  // somethuing happeded that remved land from deck premachurly
+
+					if (found_number == Num_lands)
+						break;
+				}
+			}
+			if( remove_card(land_searcher, field) == -1 )
+				return -2; //TODO difenciate this from the land removal
+			
+			return 0; //all lands found
+
+
 			} else  // if size == 0
-				return -1;
+				return -1;  // no lands of target in deck
 		}
 	}
-	return 1;  // no land search found
 }
+
+
 //TODO add traits Playable and Needed_to_play to card
 //TODO create function that sets each of those traits for cards in hand
+//
+//
 //TODO create a function that creates a need vector based on Needed_to_play
 //	give priority to colors from cards that need only 1 more mana, and then number of cards that need that color
 //	if tied decide with cards that need 2 manna of a color
 
-
+// TODO see how to incoperate that into Decision_making functions for land decisions
 
 //-------------------------------------------------------------------------------------------
 //this function returns a land card from a  given a card vector (hand or deck) based on a vector of mana need
@@ -260,13 +329,27 @@ card actions::find_land(vector<card> lands) {
 	return lands[0];
 }
 
-// play lands check needs to be -2
+//----------------------------------------
+//this function plays land from hand
+//
+//----------------------------------------------
+//return values
+//
+//   0 = succeccfully played land	
+//  -1 = no lands in hand
+//  -2 = error removeing land from hand
+//  -3 = land_per_turn already played TODO
+//-----------------------------------------------
+//Updated for new format
+//------------------------------------------
+
+// play lands check needs to be -2  TODO<--- TO FIGURE THIS OUT
 int actions::play_Land() {
 	if (Land_per_turn_flag == 0) {
 		vector<card> playable_lands;
 		for (auto card : hand) {
 			//	card.print_Card();
-			if (card.get_Type() == 'L') {
+			if (card.is_of_type("Land") == 1) {
 				playable_lands.push_back(card);
 			}
 		}
@@ -279,7 +362,7 @@ int actions::play_Land() {
 		card played_land = find_land(playable_lands);
 		DB("played land = " << played_land,-1);
 		Land_per_turn_flag = 1;
-		field.push_back(played_land);
+		field.push_back(played_land);  //TODO create put on field function that checks if enters taped
 
 		DB("\nRemoving from hand and initial hand", 10);
 		if (remove_card(played_land, hand) == -1) {
@@ -295,9 +378,16 @@ int actions::play_Land() {
 		DBV( field, 10);
 		return 0;
 	}
-	return 0;
+	return 0; //TODO make this diferenciated so that it lets me know if play_land is called with land_per_tern flag triggered
 }
 
+//-----------------------------------------------------
+//Fills mana pull with all available mana
+//-----------------------------------------------------
+//
+//--------------------------------------------
+//Needs to be updated for new format
+//------------------------------
 void actions::draw_all_Mana(vector<card>& in_play) {
 	if(in_play.size() > 0) {
 	for (auto& card_on_field : in_play) {
@@ -330,6 +420,21 @@ void actions::draw_all_Mana(vector<card>& in_play) {
 	//		VDB(1, field);
 }
 
+//--------------------------------------------
+//Plays the biggest thing, or a given card
+//
+//TODO add in function to check about enting tapped
+//
+//-----------------------------------------
+//return values
+//
+//   0 = success
+//  -1 = no card passed to function
+//  -2 = error with removal form hand
+//  -3 = error with removal from initail hand TODO
+//-------------------------------------------- 
+
+
 int actions::play_biggest_thing(card Big_thing) {
 	hand = hand;
 	if (Big_thing.get_ID().length() == 0) {
@@ -337,13 +442,13 @@ int actions::play_biggest_thing(card Big_thing) {
 		return -1;
 	}
 	vector<char> mana_cost = Big_thing.parse_Cost();
-	check_mana(mana_cost, 'P');  //call needs to be updated
+	check_mana(mana_cost, 'P');  //call needs to be updated TODO<<--- does it ?
 
-	DB("\n\nplaying", 3);
-	DB(Big_thing,3);
+	DB("\n\nplaying " + Big_thing, 3);
 
 	DB( "\nRemoving from hand and initial hand", 10);
-	field.push_back(Big_thing);
+
+	field.push_back(Big_thing);  // enter field state check TODO
 	if (remove_card(Big_thing, hand) == -1) {
 		return -2;
 	};
@@ -359,10 +464,24 @@ int actions::play_biggest_thing(card Big_thing) {
 	return 0;
 }
 
+//-------------------------------------------------
+//removes a card from a given vector
+//
+//--------------------------------------------------
+//return values
+//
+// 0 = success
+// -1 = not in selection Error
+// -2 = game should end, nothing in intial hand TODO figure out why here
+// ----------------------------------------------------------------------
+// TODO Test with changes 
+// --------------------------------------------
+
+
 int actions::remove_card(card to_remove, vector<card>& remove_from) {
 	string remove_ID = to_remove.get_ID();
 	if (end_check() == -1) {
-		return -1;
+		return -2; //was -1, changed to go along with what other function arros ar looking for
 	}  // need to chang here  - do not think so anymore
 	for (int i = 0; i < remove_from.size(); i++) {
 		if (remove_from[i].get_ID() == remove_ID) {
@@ -371,8 +490,20 @@ int actions::remove_card(card to_remove, vector<card>& remove_from) {
 		}
 	}
 	DB("\nNot it selection", 10);
-	return 0;
+	return -1; //was 0 changed to go along with what other function errors are looking for
 }
+
+//---------------------------------------------
+//THis function checks for end of game
+//	only one ending implemented now
+//	   Current end of game is no more cards left from opening hand
+//
+//--------------------------------------------------------
+//return values
+//
+//   0 = end conditions not met, continue
+//  -1 = end condition met, stop loop 
+
 
 int actions::end_check() {
 	if (initial_hand.size() < 1) {
@@ -418,9 +549,19 @@ card actions::biggest_thing_playable() {
  * 	besides initial drawing mana as that tapps things too
  ******************************************************************************/
 
-// to check if the right mana is avalable, also functions as paying mana
+
+//------------------------------------------------------------------------------
+// to check if the right mana is avalable, also functions as paying mana based on flag input
+//
 //TODO move flag check so we have 1 for loop, need to make sure optional mana works first
 //TODO work in way to do hybrid mana, possibly from vector<char> to vector<string> or vector<mana>
+//
+//--------------------------------------------------------------------------------
+//return values
+//
+//  0 = mana avalable OR mana paid
+// -1 = mana not available OR mana cant be paid
+//
 //
 //-----------------------------------------------------------------------------
 //TODO this function needs to be updated for new card style
@@ -462,6 +603,17 @@ int actions::check_mana(vector<char> mana_cost, char flag) {
 	return 0;
 }
 
+//-----------------------------------------------------------------
+//remove mana from pool
+//
+//TODO for latter reporting ability differentiate returns so I can tell from what pool
+//-----------------------------------------------------
+//return values
+//
+//  0 = sucessfuly removed
+// -1 = could not remove
+// --------------------------------------------------------
+
 
 int actions::remove_mana(char mana_symbol) {
 	for (int i = 0; i < usable_mana.size(); i++) {
@@ -473,23 +625,24 @@ int actions::remove_mana(char mana_symbol) {
 			return 0;
 		}
 	}
-		for (int i = 0; i < mana_from_optional_sources.size(); i++) {
-			if (mana_from_optional_sources[i].can_produce(toupper(mana_symbol))){
-				DB(mana_from_optional_sources[i], 0);
-				mana_from_optional_sources.erase(mana_from_optional_sources.begin() + i);
-				return 0;
-			}
+	for (int i = 0; i < mana_from_optional_sources.size(); i++) {
+		if (mana_from_optional_sources[i].can_produce(toupper(mana_symbol))){
+			DB(mana_from_optional_sources[i], 0);
+			mana_from_optional_sources.erase(mana_from_optional_sources.begin() + i);
+			return 0;
 		}
-		//remove first mana from a pool to cover colorless
-		if (toupper(mana_symbol) == 'C') {
-			if(usable_mana.size()>0){
-			DB("for C " << usable_mana[0], 3);
-				usable_mana.erase(usable_mana.begin());  
-			}	
+	}
+	//remove first mana from a pool to cover colorless
+	//TODO change for generic mana sources ,, see if it alread gets rid of colorless first
+	if (toupper(mana_symbol) == 'C') {
+		if(usable_mana.size()>0){
+		DB("for C " << usable_mana[0], 3);
+			usable_mana.erase(usable_mana.begin());  
+		}	
 		else if(mana_from_optional_sources.size() > 0){
-				DB( "for C " << mana_from_optional_sources[0], 3);
+			DB( "for C " << mana_from_optional_sources[0], 3);
 			mana_from_optional_sources.erase(mana_from_optional_sources.begin()); 
-	}       
+		}       
 		return 0;
 	}
 
@@ -504,6 +657,16 @@ int actions::remove_mana(char mana_symbol) {
  *in and not decided
  ****************************************************************************/
 
+
+//TODO look up where these are called to get full understanding of what is happening, and what is still used
+
+
+
+//----------------------------------------
+//compute the percentage
+//
+//TODO rename variable for better understanding, Determine from where it is called if these make sence
+//----------------------------------------------------------------------------------
 vector<string> actions::compute_mana_percentages() {
 	vector<float> mana_percentages = compute_source_vector();
 	DB("computed percentages", -1);
@@ -529,7 +692,10 @@ vector<string> actions::compute_mana_percentages() {
 	return need_order;
 }
 
+//------------------------------------------------------------------------------------------
 //older function, for computing need for mono type only mana sources, will be debricated
+//
+
 vector<string> actions::compute_need() {
 	vector<int> mana_needed_for_biggest =
 	    mana_cost_numbers(biggest_thing_in_hand.parse_Cost());
@@ -677,6 +843,13 @@ vector<float> actions::mana_pool_numbers(vector<mana> mana_vector, char Flag) {
 	
 	return numbers;
 }
+
+//--------------------------------------------
+//this returns the vector<float> of the difference between what i need of a color and what i have
+//	any eccess have is used to reduce colorless need
+//-----------------------------------------------------------------------------
+
+
 vector<int> actions::compute_dif(vector<float> have, vector<int> need) {
 	DB("in dif", -1);
 	vector<int> difs;
@@ -694,7 +867,7 @@ vector<int> actions::compute_dif(vector<float> have, vector<int> need) {
 		difs.push_back(dif);
 	}
 	difs[5] -= extra;  // factoring out colorles need
-	if (difs[5] < 0) difs[5] = 0;
+	if (difs[5] < 0) difs[5] = 0;  //if i have more mana then needed 
 
 	return difs;
 }
