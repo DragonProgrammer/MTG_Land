@@ -61,6 +61,7 @@ class card{
 	void parse_text_produces();
 	void parse_text_land_search();
 	void trim_oracle();
+	string trim_mana_string(string m);
 
 	int check_effect(string effect_querry);
 	string get_Name();

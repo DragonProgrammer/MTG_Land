@@ -257,19 +257,43 @@ void card::parse_text_produces(){
 			int period_at = sub_Oracle.find(".");
 			DB("Period found: " + to_string(period_at), -4);
 			string mana_string = sub_Oracle.substr(9,period_at-9);
-			Produces = mana_string;
+		//	Produces = mana_string;
 			DB(mana_string, -4);
 // remove string from oracle
 			int len = 9 + mana_string.length() + 1;
 			DB("Old Oracle text: " + Oracle_text,-4);
 			Oracle_text.replace(ability_start, len, "");
 			DB("New Oracle text: " + Oracle_text,-4);
-		
+
+//Changeing produces to fit old format
+			string bracketless = trim_mana_string(mana_string);
+
+	
 
 		}
 		else
 			DB("Fixxer found", -4);
 	}
+}
+
+//*************************************************
+//This function removes the brackets around the mana symbols
+//   "{R}" becomes "R"
+//   "{R} or {G}" becomes "R or G"
+//*****************************************************   
+
+
+string card::trim_mana_string(string m) {
+	int string_length = m.length();
+	DB("Before trim " + m, -5);
+
+	for( int c = 0; c < string_length; c++){
+		if (m[c] == '{' || m[c] == '}') {
+			m.replace(c,1,"");
+			DB("After Trim " + m, -5);
+		}
+	}
+	return m;
 }
 
 //*************************************************************
