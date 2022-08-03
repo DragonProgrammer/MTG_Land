@@ -158,7 +158,7 @@ vector<card> create_deck( vector<card_listing> deck_list ){
 	return working_deck;
 }
 
-
+/**
 int main() {
 
 	string deck_file = "deck.txt";
@@ -177,5 +177,5 @@ int main() {
 
 	return 0;
 }
-
+**/
 // get card data

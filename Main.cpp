@@ -3,6 +3,8 @@
 #include <string>
 #include "actions.h"
 #include "card.h"
+#include "card_parse.cpp"
+
 using std::cout;
 using std::endl;
 using std::fstream;

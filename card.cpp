@@ -60,7 +60,7 @@ vector<char> card::parse_Cost() {
 // commented out due compiler error and not used at this poitn
 
 
-/**
+
 
 vector<mana> card::parse_Produces() {
 	vector<mana> from_source;
@@ -81,7 +81,7 @@ vector<mana> card::parse_Produces() {
 		return from_source;
 }
 
-**/
+
 
 
 
@@ -124,7 +124,7 @@ string card::get_Name(){
 }
 	
 
-effect card::get_effect(){return Card_effect;}
+effect card::get_Effect(){return Card_effect;}
 
 
 //************************************************************

@@ -63,7 +63,7 @@ class card{
 	void trim_oracle();
 	string trim_mana_string(string m);
 
-	int check_effect(string effect_querry);
+	int check_Effect(string effect_querry);
 	string get_Name();
 
 	//tokonizes query and sees if parts are in the 3 types
@@ -74,9 +74,9 @@ class card{
 //----------------------------------------------------
 //   CHANGED FUNCTIONS
 //-------------------------------------------------------
-	effect get_effect();
+	effect get_Effect();
 	vector<char> parse_Cost();
-//	vector<mana> parse_Produces();// need to rework for optional ie R or G
+	vector<mana> parse_Produces();// need to rework for optional ie R or G
 	void print_Card();
 friend ostream& operator<<(ostream &os, const card &cd);
 

@@ -78,7 +78,7 @@ void actions::set_initial_Hand() {
 // sets per turn flags to 0
 // -------------------------------------------------------
 void actions::new_turn(vector<card>& in_play) {
-	for (int i = 0; i < in_play.size(); i++) {
+	for (int i = 0; i < int(in_play.size()); i++) {
 		card temp = in_play[i];
 		temp.set_Mode('U');
 		in_play[i] = temp;
@@ -168,10 +168,11 @@ int actions::land_search() {
 		//TODO add in mana cost
 		if (card_on_field.get_Effect().get_Eff_Type() == "Search" &&
 		    card_on_field.get_Effect().get_Eff_Cost().find("Tap") != string::npos &&
-		    card_on_field.get_Mode() == 'U') {
+		    card_on_field.get_Mode() == 'U') 
+		{
 			DB("found Land search", 0);
 			search_found_flag = 1;
-			land_searcher = card_on_field  //at this point is search_avalability function either add this card to found vector or just return this card
+			land_searcher = card_on_field;  //at this point is search_avalability function either add this card to found vector or just return this card
 
 
 		//set up variable to determine effects of search
@@ -179,7 +180,7 @@ int actions::land_search() {
 
 			search_Target = search_Effect.get_Eff_Target_Type();
 			land_Endpoint = search_Effect.get_Eff_Endpoint();
-			land_State = search_Effect.get_Eff_state();
+			land_State = search_Effect.get_Eff_State();
 			Num_lands = search_Effect.get_Eff_Target_Numeric();
 			
 		}
@@ -191,52 +192,47 @@ int actions::land_search() {
 
 			//determine if I am seraching for basic land
 			//TODO iplement panaramas and shard convergence
-	if(search_target.find("Basic") != string::npos){
+	if(search_Target.find("Basic") != string::npos){
 				//create a vector of basic land cards from deck
-				vector<card> lands_in_deck;
-				for (auto card_in_deck : deck) {
-					if (card_in_deck.is_of_type(search_target)
-						lands_in_deck.push_back(card_in_deck);
-			}
-			if (lands_in_deck.size() > 0) {
+		vector<card> lands_in_deck;
+		for (auto card_in_deck : deck) {
+			if (card_in_deck.is_of_Type(search_Target))
+				lands_in_deck.push_back(card_in_deck);
+		}
+		if (lands_in_deck.size() > 0) {
 
 				//TODO add found_land vector to implement Cultivate
 				
 			//	for(int l = 0; l < num_lands; l++){
-				int found_number = 0; // to make sure i find only Num_lands
-				while( lands_in_deck.size() > 0) {
-					card found_land = find_land(lands_in_deck);
+			int found_number = 0; // to make sure i find only Num_lands
+			while( lands_in_deck.size() > 0) {
+				card found_land = find_land(lands_in_deck);
 					
 						
-					found_number++
-					if(land_Endpoint == "Field"){
-						field.push_back(found_land);
-				       		if( land_State == "Tapped" )
-							field[field.size() - 1].set_Mode('T');
-						else
-							field[field.size() - 1].set_Mode('U');
+				found_number++;
+				if(land_Endpoint == "Field"){
+					field.push_back(found_land);
+				       	if( land_State == "Tapped" )
+						field[field.size() - 1].set_Mode('T');
+					else
+						field[field.size() - 1].set_Mode('U');
 					}
-					if(land_Endpoint == "Hand" ){
-						hand.push_back(found_land);
-					}
-					if (remove_card(found_land, deck) == -1) {
-						return -2;
-					}  // somethuing happeded that remved land from deck premachurly
-
-					if (found_number == Num_lands)
-						break;
+				if(land_Endpoint == "Hand" ){
+					hand.push_back(found_land);
 				}
+				if (remove_card(found_land, deck) == -1) {
+					return -2;
+				}  // somethuing happeded that remved land from deck premachurly
+
+				if (found_number == Num_lands)
+					break;
 			}
-			if( remove_card(land_searcher, field) == -1 )
-				return -2; //TODO difenciate this from the land removal
-			
-			return 0; //all lands found
-
-
-			} else  // if size == 0
-				return -1;  // no lands of target in deck
 		}
-	}
+		if( remove_card(land_searcher, field) == -1 )
+			return -2; //TODO difenciate this from the land removal
+		return 0; //all lands found
+	} else  // if size == 0
+		return -1;  // no lands of target in deck
 }
 
 
@@ -318,7 +314,7 @@ card actions::find_land(vector<card> lands) {
 		}
 //find me a teramorphic
 	for (auto selected_card : lands) {
-		if (selected_card.get_Enters() == 'U' && selected_card.get_Effect() == "Search") {
+		if (selected_card.get_Enters() == 'U' && selected_card.get_Effect().get_Eff_Type() == "Search") {
 			played_land = selected_card;
 			DB("return land optuion: teramorphic", -1);
 			return played_land;
@@ -349,7 +345,7 @@ int actions::play_Land() {
 		vector<card> playable_lands;
 		for (auto card : hand) {
 			//	card.print_Card();
-			if (card.is_of_type("Land") == 1) {
+			if (card.is_of_Type("Land") == 1) {
 				playable_lands.push_back(card);
 			}
 		}
@@ -400,7 +396,7 @@ void actions::draw_all_Mana(vector<card>& in_play) {
 
 			string produces = card_on_field.get_Produces();
 
-			if(produces.find('_') == -1){
+			if(int(produces.find('_')) -1){
 				for (auto mana_produced : sourced) {
 					usable_mana.push_back(mana_produced);
 				}
@@ -444,7 +440,7 @@ int actions::play_biggest_thing(card Big_thing) {
 	vector<char> mana_cost = Big_thing.parse_Cost();
 	check_mana(mana_cost, 'P');  //call needs to be updated TODO<<--- does it ?
 
-	DB("\n\nplaying " + Big_thing, 3);
+	DB("\n\nplaying " + Big_thing.get_ID(), 3);
 
 	DB( "\nRemoving from hand and initial hand", 10);
 
@@ -483,7 +479,7 @@ int actions::remove_card(card to_remove, vector<card>& remove_from) {
 	if (end_check() == -1) {
 		return -2; //was -1, changed to go along with what other function arros ar looking for
 	}  // need to chang here  - do not think so anymore
-	for (int i = 0; i < remove_from.size(); i++) {
+	for (int i = 0; i < int(remove_from.size()); i++) {
 		if (remove_from[i].get_ID() == remove_ID) {
 			remove_from.erase(remove_from.begin() + i);
 			return 0;
@@ -616,7 +612,7 @@ int actions::check_mana(vector<char> mana_cost, char flag) {
 
 
 int actions::remove_mana(char mana_symbol) {
-	for (int i = 0; i < usable_mana.size(); i++) {
+	for (int i = 0; i < int(usable_mana.size()); i++) {
 //		if (toupper(usable_mana[i].get_produced) == toupper(mana_symbol))
 		if(usable_mana[i].can_produce(toupper(mana_symbol)))
 		{
@@ -625,7 +621,7 @@ int actions::remove_mana(char mana_symbol) {
 			return 0;
 		}
 	}
-	for (int i = 0; i < mana_from_optional_sources.size(); i++) {
+	for (int i = 0; i < int(mana_from_optional_sources.size()); i++) {
 		if (mana_from_optional_sources[i].can_produce(toupper(mana_symbol))){
 			DB(mana_from_optional_sources[i], 0);
 			mana_from_optional_sources.erase(mana_from_optional_sources.begin() + i);
@@ -668,12 +664,12 @@ int actions::remove_mana(char mana_symbol) {
 //TODO rename variable for better understanding, Determine from where it is called if these make sence
 //----------------------------------------------------------------------------------
 vector<string> actions::compute_mana_percentages() {
-	vector<float> mana_percentages = compute_source_vector();
+	vector<float> functions_mana_percentages = compute_source_vector();
 	DB("computed percentages", -1);
 	vector<string> need_order;
 	vector<char> mana_types = {'R', 'W', 'B', 'U', 'G', 'C'};
-	for (int i = 0; i < mana_types.size(); i++) {
-		string need_of_type = to_string(mana_percentages[i]) + mana_types[i];
+	for (int i = 0; i < int(mana_types.size()); i++) {
+		string need_of_type = to_string(functions_mana_percentages[i]) + mana_types[i];
 		need_order.push_back(need_of_type);
 	}
 	DB("made string vector", 0);
@@ -705,7 +701,7 @@ vector<string> actions::compute_need() {
 	DB("computed dif", -1);
 	vector<string> need_order;
 	vector<char> mana_types = {'R', 'W', 'B', 'U', 'G', 'C'};
-	for (int i = 0; i < mana_types.size(); i++) {
+	for (int i = 0; i < int(mana_types.size()); i++) {
 		string need_of_type = to_string(mana_requirements[i]) + mana_types[i];
 		need_order.push_back(need_of_type);
 	}
@@ -854,7 +850,7 @@ vector<int> actions::compute_dif(vector<float> have, vector<int> need) {
 	DB("in dif", -1);
 	vector<int> difs;
 	int extra = 0;
-	for (int i = 0; i < have.size(); i++) {
+	for (int i = 0; i < int(have.size()); i++) {
 		int dif = need[i] - have[i];
 		DB(5, need[i]);
 		DB(5, have[i]);

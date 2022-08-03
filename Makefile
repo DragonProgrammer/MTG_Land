@@ -36,8 +36,8 @@ SOURCE_FILES  = $(HEADER_FILES) $(CODE_FILES)
 LIBS          = 
 LDFLAGS       = $(shell pkg-config --libs $(LIBS)) -ltinfo 
 
-all: card_parse
-card_parse: card_parse.o card.o Debug.h effect.o
+all: main 
+main: actions.o main.o card_parse.o card.o Debug.h effect.o
 	$(CXX) $(CXXFLAGS) -o $@ $^
 
 
