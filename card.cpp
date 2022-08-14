@@ -364,8 +364,12 @@ ostream& operator<<(ostream& os, const card& cd) {
 		if( t+1 != cd.Type.size() )
 			type_line = type_line + " ";
 	}
+/**
 	if(cd.Power == "")
 		return (os << cd.ID + " " + to_string(cd.CMC) + " " + cd.Cost + " " + type_line + " " + cd.Oracle_text + "        ");
 	else
 		return (os << cd.ID + " " + to_string(cd.CMC) + " " + cd.Cost + " " + type_line + " " + cd.Oracle_text + " " + cd.Power + "/" + cd.Toughness  +  "        ");
+**/
+
+	return (os << cd.ID + "        ");
 }

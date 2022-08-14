@@ -1,6 +1,8 @@
-Evolving Wilds; 1
+Evolving Wilds; 4
 Goblin Hero;4
-Forest ;10
-Simic Locket; 3
-Sky Diamond; 2
-Evolving Wilds; 1
+Goblin King;2
+Raging Goblin;4
+Goblin Glider;4
+Mountain ;10
+Gruul Locket; 3
+Charcoal Diamond; 2

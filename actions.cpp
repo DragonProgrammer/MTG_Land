@@ -13,6 +13,7 @@
 #include "actions.h"
 #include "card.h"
 #include "cost.h"
+#include "mana.h"
 using std::abs;
 using std::cout;
 using std::default_random_engine;
@@ -61,6 +62,9 @@ void actions::set_deck(vector<card> from_main) {
 }
 
 void actions::set_initial_Hand() {
+	hand.clear();
+	initial_hand.clear();
+	
 	for (int i = 0; i < 7; i++) {
 		hand.push_back(deck[0]);
 		deck.erase(deck.begin());
@@ -267,6 +271,7 @@ card actions::find_land(vector<card> lands) {
 		DB("mana need " << land_color, 0);
 		for (auto selected_card : lands) {
 			mana basic_test = selected_card.parse_Produces()[0]; // this should give me the mana a land could produce if it only proicuded one mana
+			DB("\n\nTHis is the basic land mana:  " << basic_test << "\n\n\n", 7);
 			if (selected_card.get_Enters() == 'U' &&
 			    basic_test.can_produce(land_color)) {
 				played_land = selected_card;
@@ -406,7 +411,7 @@ void actions::draw_all_Mana(vector<card>& in_play) {
 				mana_from_optional_sources.push_back(sourced[0]);
 			}
 			card_on_field.set_Mode('T');
-			DB(card_on_field.get_Mode(), 10);
+			DB(card_on_field.get_Mode(), 3);
 		}
 	}
 	}
@@ -852,9 +857,9 @@ vector<int> actions::compute_dif(vector<float> have, vector<int> need) {
 	int extra = 0;
 	for (int i = 0; i < int(have.size()); i++) {
 		int dif = need[i] - have[i];
-		DB(5, need[i]);
-		DB(5, have[i]);
-		DB(5, dif);
+//		DB(5, need[i]);
+//		DB(5, have[i]);
+//		DB(5, dif);
 
 		if (dif < 0) {
 			extra += abs(dif);  // extra mana to factor out colorless need
@@ -897,10 +902,10 @@ float actions::average_for_deck(vector<card> input) {
 		int turns = game_loop(input);
 		if(turns == 0){
 			failed_games++;
-			DB("Game failed", -1);
+			DB("Game failed", 12);
 			continue;
 			}
-		DB("\nTook " + to_string(turns) + " turns.", -2);
+		DB("\nTook " + to_string(turns) + " turns.\n\n", 12);
 		total_turns += turns;
 	}
 	DB(total_turns, 10); // will have to check with failed games math later
@@ -913,13 +918,13 @@ int actions::game_loop(vector<card> input) {
 	set_deck(input);
 	set_initial_Hand();
 	set_state(); // game state imnitializer
-	DB("Initial Hand", 2);
-	DBV(initial_hand, 2);
+	DB("Initial Hand", 12);
+	DBV(initial_hand, 12);
 	while (1 == 1) {
 		new_turn(field);
 		if (draw_card() == -1) {
 			// end run
-			DB("Drew all cards in " + to_string(turn_counter) + " turns", -1);
+			DB("Drew all cards in " + to_string(turn_counter) + " turns", 12);
 			set_state();// allows me to make report off of failed run
 			return 0; //indicates failed run
 		}
@@ -945,7 +950,7 @@ int actions::game_loop(vector<card> input) {
 	//	int land_options = land_search();
 		DB("\nFIeld 5: " + to_string(field.size()), -1);  //TODO update these DB statements to include optional mana
 		int end_check = play_Land();
-		if (end_check == -1) DB( "no lands to play this turn", 5);
+		if (end_check == -1) DB( "no lands to play this turn", 12);
 		if (end_check == -2) {
 			return turn_counter;
 		}

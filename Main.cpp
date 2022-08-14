@@ -3,7 +3,7 @@
 #include <string>
 #include "actions.h"
 #include "card.h"
-#include "card_parse.cpp"
+#include "deck.h"
 
 using std::cout;
 using std::endl;
@@ -11,20 +11,20 @@ using std::fstream;
 using std::string;
 using std::to_string;
 int main(int argc, char* argv[]) {
-	fstream deck_input;
-	deck_input.open(argv[1]);
+	
+	if( argc < 2){ cout << "need file" << endl; }
+
 	 cout << "test" << endl;
 	// card TEST;
 	vector<card> deck_from_file;
-	string card_line;
-	while (getline(deck_input, card_line)) {
-		card new_card;
-		new_card.set_card(card_line);
-		deck_from_file.push_back(new_card);
-	}
-		for(auto card : deck_from_file){
-//			card.print_Card();
-		}
+	
+	deck trial_deck;
+
+	trial_deck = deck(argv[1]);
+
+	deck_from_file = trial_deck.get_Deck();
+
+
 
 	actions Game_run;
 	 cout << "test" << endl;
