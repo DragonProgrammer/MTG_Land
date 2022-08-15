@@ -371,5 +371,5 @@ ostream& operator<<(ostream& os, const card& cd) {
 		return (os << cd.ID + " " + to_string(cd.CMC) + " " + cd.Cost + " " + type_line + " " + cd.Oracle_text + " " + cd.Power + "/" + cd.Toughness  +  "        ");
 **/
 
-	return (os << cd.ID + "        ");
+	return (os << cd.ID + " "+ cd.Cost + "       ");
 }

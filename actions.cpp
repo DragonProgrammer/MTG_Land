@@ -361,7 +361,7 @@ int actions::play_Land() {
 		}
 
 		card played_land = find_land(playable_lands);
-		DB("played land = " << played_land,-1);
+		DB("played land = " << played_land,12);
 		Land_per_turn_flag = 1;
 		field.push_back(played_land);  //TODO create put on field function that checks if enters taped
 
@@ -438,14 +438,15 @@ void actions::draw_all_Mana(vector<card>& in_play) {
 
 int actions::play_biggest_thing(card Big_thing) {
 	hand = hand;
+
 	if (Big_thing.get_ID().length() == 0) {
-		DB("Nothing More to play",10);
+		DB("Nothing More to play",12);
 		return -1;
 	}
 	vector<char> mana_cost = Big_thing.parse_Cost();
 	check_mana(mana_cost, 'P');  //call needs to be updated TODO<<--- does it ?
 
-	DB("\n\nplaying " + Big_thing.get_ID(), 3);
+	DB("\n\nplaying " <<  Big_thing, 12);
 
 	DB( "\nRemoving from hand and initial hand", 10);
 
@@ -525,6 +526,7 @@ card actions::biggest_in_hand() {
 			biggest = card_in_hand;
 		}
 	}
+	DB("Found biggest in biggest_in_hand   " << biggest, 13);
 	return biggest;
 }
 
@@ -535,12 +537,13 @@ card actions::biggest_thing_playable() {
 		int CMC = card_in_hand.get_CMC();
 		if (CMC <= total_mana_avalable && CMC > biggest.get_CMC()) {
 			vector<char> mana_cost = card_in_hand.parse_Cost();
-			DB("checking ", 2);
-			DB(card_in_hand, 2); // will want to check in course of mathing optional lands
+			DB("checking " << card_in_hand, 13);
+			DB(card_in_hand, 13); // will want to check in course of mathing optional lands
 			if (check_mana(mana_cost, 'C') != -1)  
 				biggest = card_in_hand;
 		}
 	}
+	DB("Found biggest in biggest_thing_playable   " << biggest, 13);
 	return biggest;
 }
 
@@ -922,6 +925,7 @@ int actions::game_loop(vector<card> input) {
 	DBV(initial_hand, 12);
 	while (1 == 1) {
 		new_turn(field);
+		DB("This is turn:   " + to_string(turn_counter) + "\n", 12);
 		if (draw_card() == -1) {
 			// end run
 			DB("Drew all cards in " + to_string(turn_counter) + " turns", 12);

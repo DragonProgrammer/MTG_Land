@@ -6,8 +6,8 @@ using std::cerr;
 using std::endl;
 using std::vector;
 typedef vector< vector<float> > vec;
-#define DB_FLAG 12
-#define DB(x, level) if(DB_FLAG == level)do{cerr << x << endl;}while(0)
+#define DB_FLAG = vector< int > {12,13}
+#define DB(x, level) for(auto flag : DB_FLAG){if(flag == level)do{cerr << x << endl;}}while(0)
 #define DBV(x, level) if(DB_FLAG == level)do{for(auto h : x) { cerr << h << "  ";}cerr << endl; } while(0)
 #define DBM(vec, level) if(DB_FLAG == level)do{for(int r =0; r < 4; r++){ for(int c = 0; c <4; c++) cerr << "point " << r << " " << c << " " << vec[r][c] << "     "; cerr << endl;} } while(0)
 #else
@@ -30,7 +30,7 @@ typedef vector< vector<float> > vec;
 //  7 = turn counter
 //
 //  12 = game loop stats
-//
+//  13 - card in hand checks
 //  10 - removing cards from list
 // 20 = Empty/ NO DB
 //
