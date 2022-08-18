@@ -444,10 +444,10 @@ int actions::play_biggest_thing(card Big_thing) {
 		DBA("Nothing More to play");
 		return -5;
 	}
-	vector<char> mana_cost = Big_thing.parse_Cost();
+	vector<char> mana_cost = Big_thing.get_Cost();
 	check_mana(mana_cost, 'P');  //call needs to be updated TODO<<--- does it ?
 
-	DB("\n\nplaying " <<  Big_thing, 12);
+	DB("\n\nplaying " <<  Big_thing, 14);
 
 	DB( "\nRemoving from hand and initial hand", 10);
 
@@ -456,7 +456,7 @@ int actions::play_biggest_thing(card Big_thing) {
 		return -3;
 	};
 
-	DB( "\nhand", 10);
+	DB( "\nhand after play", 14444);
 	DBV(hand, 10);
 
 	if (remove_card(Big_thing, initial_hand) == -3) {
@@ -535,16 +535,23 @@ card actions::biggest_thing_playable() {
 	int total_mana_avalable = usable_mana.size() + mana_from_optional_sources.size();
 
 	card biggest;
-	DB("Total usable mana   " + to_string(total_mana_avalable), 13);
+	DB("Total usable mana   " + to_string(total_mana_avalable), 14);
 	for (auto card_in_hand : hand) {
+		if (card_in_hand.is_of_Type("Land") == 1){
+			continue;
+		}
 		int CMC = card_in_hand.get_CMC();
-		DB("checking " << card_in_hand << " for biggest", 12);
+		DB("checking " << card_in_hand << " for biggest", 14);
 		if (CMC <= total_mana_avalable && CMC > biggest.get_CMC()) {
-			vector<char> mana_cost = card_in_hand.parse_Cost();
-			DB("checking " << card_in_hand, 12);
-			DB(card_in_hand, 13); // will want to check in course of mathing optional lands
+			vector<char> mana_cost = card_in_hand.get_Cost();
+			DB("its cost is", 14);
+			DBV(mana_cost,14);
+			DB("checking " << card_in_hand, 13);
+			DBV(mana_cost,13);
 			if (check_mana(mana_cost, 'C') != -1)  
 				biggest = card_in_hand;
+			else
+				DB("do not have mana for it",14);
 		}
 	}
 	DB("Found biggest in biggest_thing_playable   " << biggest, 12);
@@ -593,6 +600,7 @@ int actions::check_mana(vector<char> mana_cost, char flag) {
 	} else {  // temporarily empty from pool
 		DB("in check", 2);
 		for (auto cost_symbol : mana_cost) {
+			DB("the cost i am checking is " << cost_symbol,14);
 			if (remove_mana(cost_symbol) == -1) {
 				DB("\ncheck failed", 2);
 				usable_mana.clear();  // clear out mana vector
@@ -626,9 +634,10 @@ int actions::check_mana(vector<char> mana_cost, char flag) {
 int actions::remove_mana(char mana_symbol) {
 	for (int i = 0; i < int(usable_mana.size()); i++) {
 //		if (toupper(usable_mana[i].get_produced) == toupper(mana_symbol))
+		DB("The mana I am comparing it to is  " << usable_mana[i].get_produced() , 14);
 		if(usable_mana[i].can_produce(toupper(mana_symbol)))
 		{
-			DB(usable_mana[i], 5);
+			DB("I found it can produce " << usable_mana[i], 14);
 			usable_mana.erase(usable_mana.begin() + i);
 			return 0;
 		}
@@ -644,7 +653,7 @@ int actions::remove_mana(char mana_symbol) {
 	//TODO change for generic mana sources ,, see if it alread gets rid of colorless first
 	if (toupper(mana_symbol) == 'C') {
 		if(usable_mana.size()>0){
-		DB("for C " << usable_mana[0], 3);
+		DB("for C " << usable_mana[0], 14);
 			usable_mana.erase(usable_mana.begin());  
 		}	
 		else if(mana_from_optional_sources.size() > 0){
@@ -706,7 +715,7 @@ vector<string> actions::compute_mana_percentages() {
 
 vector<string> actions::compute_need() {
 	vector<int> mana_needed_for_biggest =
-	    mana_cost_numbers(biggest_thing_in_hand.parse_Cost());
+	    mana_cost_numbers(biggest_thing_in_hand.get_Cost());
 	DB("computed for bigest", -1);
 	vector<int> mana_requirements =
 	    compute_dif(mana_pool_numbers(usable_mana, 'N'), mana_needed_for_biggest);
@@ -900,7 +909,7 @@ void turn_report();
  * 	The functions that determin the order things happen in
  *********************************************************************************************/
 float actions::average_for_deck(vector<card> input) {
-	int total_runs = 5; //TODO later make this changeable by input
+	int total_runs = 1; //TODO later make this changeable by input
 	int total_turns = 0;
 	int failed_games = 0; //TODO posiblby make this an extern so i can output it in report
 	
@@ -929,11 +938,11 @@ int actions::game_loop(vector<card> input) {
 	set_initial_Hand();
 	field.clear();
 	set_state(); // game state imnitializer
-	DB("Initial Hand", 12);
-	DBV(initial_hand, 12);
+	DB("Initial Hand", 14);
+	DBV(initial_hand, 14);
 	while (1 == 1) {
 		new_turn(field);
-		DB("This is turn:   " + to_string(turn_counter) + "\n", 13);
+		DB("This is turn:   " + to_string(turn_counter) + "\n", 14);
 		int loop_statement = draw_card();
 		if (loop_statement == -4) {
 			// end run
@@ -977,15 +986,18 @@ int actions::game_loop(vector<card> input) {
 			return turn_counter;
 		}
 			// game limiter for testing
-		if(turn_counter > 15)
+		if(turn_counter > 15){
+			DBA("Field at end of game");
+			DBVA(field);
+			set_state();// allows me to make report off of  run
 			return 0;
-
+		}
 		draw_all_Mana(field);// adds mana from new land
 		DB("\nFIeld 6: " + to_string(field.size()), -1);  //TODO update these DB statements to include optional mana
 		set_state();
 		DB("\n\nmana after land play", 13);
 		DB("\nFIeld 7: " + to_string(field.size()), -1);  //TODO update these DB statements to include optional mana
-		DBV(usable_mana, 13);
+		DBV(usable_mana, 14);
 		while(0==0){
 			int mana_available_check = usable_mana.size() + mana_from_optional_sources.size();
 			if (mana_available_check == 0){
@@ -995,20 +1007,22 @@ int actions::game_loop(vector<card> input) {
 
 			card thing_to_play = biggest_thing_playable();
 			string name_thing_to_play = thing_to_play.get_ID();
-			DB("The card to play is:  " + name_thing_to_play, 14);
+			DB("\nThe card to play is:  " + name_thing_to_play, 14);
 			if(name_thing_to_play.size() == 0)
 				loop_statement = -5;
 			if (loop_statement == -5){
 				DBA("Cant play anything");
 				break;
 			}
-			loop_statement = play_biggest_thing(biggest_thing_playable());
+			loop_statement = play_biggest_thing(thing_to_play);
 			// check if played last card with big thing
 			
 			if (loop_statement == -3) DBA( "Error removing biggest_thing from hand" );
 			set_state(); // each spell makes a new gamestate
 
 
+			DB("THe field after play", 14);
+			DBV(field, 14);
 			
 
 			loop_statement = end_check();

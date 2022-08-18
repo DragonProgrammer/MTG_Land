@@ -32,5 +32,6 @@ int main(int argc, char* argv[]) {
 		 cout << "All games failed";
 	 else
 		 cout << "The average for the deck is " << to_string(average) << endl;
-	return 0;
+
+	 return 0;
 }

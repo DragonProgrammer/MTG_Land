@@ -9,7 +9,7 @@ using std::vector;
 using std::ostream;
 class card{
 	string ID;
-	string Cost;
+	vector<char> Cost;
 	char Enters;
 	effect Card_effect;
 	char Mode;
@@ -20,7 +20,7 @@ class card{
 // ___________________________________________________________
 	
 	string Oracle_text;
-
+	string Cost_string;
 	vector<string> Super_Type;
 	vector<string> Sub_Type;
 	vector<string> Type;
@@ -75,7 +75,8 @@ class card{
 //   CHANGED FUNCTIONS
 //-------------------------------------------------------
 	effect get_Effect();
-	vector<char> parse_Cost();
+	vector<char> parse_Cost(string cost_string);
+	vector<char> get_Cost();
 	vector<mana> parse_Produces();// need to rework for optional ie R or G
 	void print_Card();
 friend ostream& operator<<(ostream &os, const card &cd);

@@ -6,10 +6,11 @@ using std::cerr;
 using std::endl;
 using std::vector;
 typedef vector< vector<float> > vec;
-#define DB_FLAG 13
+#define DB_FLAG 14
 #define DBA(x)do{cerr << x << endl;}while(0)
 #define DBVA(x) do{for(auto h : x) { cerr << h << "  ";}cerr << endl; } while(0)
 #define DB(x, level) if(DB_FLAG == level)do{cerr << x << endl;}while(0)
+//#define DB(x, level) for(auto flag : DB_FLAG){if(flag == level)do{cerr << x << endl;}}while(0)
 #define DBV(x, level) if(DB_FLAG == level)do{for(auto h : x) { cerr << h << "  ";}cerr << endl; } while(0)
 #define DBM(vec, level) if(DB_FLAG == level)do{for(int r =0; r < 4; r++){ for(int c = 0; c <4; c++) cerr << "point " << r << " " << c << " " << vec[r][c] << "     "; cerr << endl;} } while(0)
 #else

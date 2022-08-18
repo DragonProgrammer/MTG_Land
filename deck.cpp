@@ -153,6 +153,7 @@ void deck::create_Deck( vector<card_listing> deck_list ){
 
 
 //create card
+		DB("going to create card", -4);
 		cdata.set_card(name, mana_value, cost, types, super, sub, oracle, p, t);
 
 //add amount of cards to deck

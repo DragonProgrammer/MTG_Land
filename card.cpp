@@ -14,13 +14,18 @@ using std::stringstream;
 using std::to_string;
 using std::vector;
 using std::find;
+using std::stoi;
+using std::strcpy;
 
 card::card() {}
 
 void card::set_card(string name, int mana_value, string cost, vector<string> card_types, vector<string> card_super_types, vector<string> card_sub_types, string oracle, string p, string t){
 	ID = name;
 	CMC = mana_value;
-	Cost = cost;
+	Cost_string = cost;
+	DB("Next step parse_Cost()",-4);
+	DB("THe cost to parse is " + Cost_string, -4);
+	Cost = parse_Cost(cost); 
 	Super_Type = card_super_types;
 	Sub_Type = card_sub_types;
 	Type = card_types;
@@ -44,18 +49,47 @@ void card::set_card(string name, int mana_value, string cost, vector<string> car
 //	does not work for hybrid mana costs
 //	** UPDATED FOR NEW FORMAT **
 //--------------------------------------------------------
-vector<char> card::parse_Cost() {
+vector<char> card::parse_Cost(string cost_string) {
 	vector<char> costs;
-	unsigned int spot = 0;
-	while (spot < Cost.length()) {
-		if(Cost[spot] != '{' && Cost[spot] != '}') //bypass the symbol seperaters
-		costs.push_back(Cost[spot]);
-		spot++;
+	vector<string> cost_split;
+	size_t split_spot;
+	//this gets the segments of the mana cost string
+	split_spot = cost_string.find("}{");
+	while (split_spot != string::npos){
+		string cost_part = cost_string.substr(0,split_spot);
+		cost_split.push_back(cost_part);
+		cost_string = cost_string.substr(split_spot+2,cost_string.length()+1);
+		split_spot = cost_string.find("}{");
 	}
+	//this gets the last segment or the whole string if there is only one symbol
+	cost_split.push_back(cost_string);
+
+	for (auto part : cost_split){
+		DB("This is a part of cost " + part, -4);
+		part = trim_mana_string(part);
+		size_t t;
+		try{
+			int colorless_check = stoi(part, &t);
+			if(colorless_check > 0){
+				for(int c = 1; c <= colorless_check; c++){
+					costs.push_back('C');
+				}
+			}
+		}
+		catch (std::invalid_argument& e){
+			char symbol = part[0];
+			costs.push_back(symbol);
+		}
+
+		//this will not work for hybrid symbols
+		//TODO CHange to make hybrid symbols work
+	}
+	DB("THe card costs",-4);
+	DBV(costs,-4);
 	return costs;
 }
 
-
+vector<char> card::get_Cost(){return Cost;}
 //TODO  rework based on oracle text
 //TODO figure out why make is giving a "undefined referance to mana::mana(char ..."
 // commented out due compiler error and not used at this poitn
@@ -121,6 +155,8 @@ string card::get_Name(){
 		int identifier = ID.find('_');
 		Name = ID.substr(0,identifier);
 	}
+	else
+		Name = ID;
 	return Name;
 }
 	
@@ -133,7 +169,7 @@ effect card::get_Effect(){return Card_effect;}
 //******************************************************************
 
 void card::parse_Oracle(){
-	DBA(Oracle_text);
+	DB(Oracle_text, 1);
 	parse_text_enters();
 	trim_oracle();
 	parse_text_produces();
@@ -226,7 +262,7 @@ void card::trim_oracle(){
 //-----------------------------------------------
 void card::parse_text_enters(){
 	string to_find = get_Name() + " enters the battlefield tapped.";
-	DB(to_find, -4);
+	DB("I am looking for: " + to_find, -4);
 	if (Oracle_text.find(to_find) != string::npos){
 		Enters = 'T';
 		DB("Enters tapped", -4);
@@ -375,5 +411,5 @@ ostream& operator<<(ostream& os, const card& cd) {
 		return (os << cd.ID + " " + to_string(cd.CMC) + " " + cd.Cost + " " + type_line + " " + cd.Oracle_text + " " + cd.Power + "/" + cd.Toughness  +  "        ");
 **/
 
-	return (os << cd.ID + " "+ cd.Cost + "       ");
+	return (os << cd.ID + " "+ cd.Cost_string + "       ");
 }
