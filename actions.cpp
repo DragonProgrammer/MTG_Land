@@ -900,7 +900,7 @@ void turn_report();
  * 	The functions that determin the order things happen in
  *********************************************************************************************/
 float actions::average_for_deck(vector<card> input) {
-	int total_runs = 10; //TODO later make this changeable by input
+	int total_runs = 5; //TODO later make this changeable by input
 	int total_turns = 0;
 	int failed_games = 0; //TODO posiblby make this an extern so i can output it in report
 	
@@ -976,6 +976,9 @@ int actions::game_loop(vector<card> input) {
 			set_state();// allows me to make report of run
 			return turn_counter;
 		}
+			// game limiter for testing
+		if(turn_counter > 15)
+			return 0;
 
 		draw_all_Mana(field);// adds mana from new land
 		DB("\nFIeld 6: " + to_string(field.size()), -1);  //TODO update these DB statements to include optional mana
@@ -1004,6 +1007,9 @@ int actions::game_loop(vector<card> input) {
 			
 			if (loop_statement == -3) DBA( "Error removing biggest_thing from hand" );
 			set_state(); // each spell makes a new gamestate
+
+
+			
 
 			loop_statement = end_check();
 			if (loop_statement == 1) {

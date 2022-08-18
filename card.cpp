@@ -32,6 +32,7 @@ void card::set_card(string name, int mana_value, string cost, vector<string> car
 	Produces = "-";
 	Card_effect = effect("-","-","-",0,"-","-","-");
 
+	parse_Oracle();
 	//put in call to parser functions here for 
 	//	Enters and Mode
 	//	Produces
@@ -132,9 +133,11 @@ effect card::get_Effect(){return Card_effect;}
 //******************************************************************
 
 void card::parse_Oracle(){
+	DBA(Oracle_text);
 	parse_text_enters();
 	trim_oracle();
 	parse_text_produces();
+	DB("This card Procuces: " + Produces, -4);
 	trim_oracle();
 	parse_text_land_search();
 	trim_oracle();
@@ -267,6 +270,7 @@ void card::parse_text_produces(){
 
 //Changeing produces to fit old format
 			string bracketless = trim_mana_string(mana_string);
+			Produces = bracketless;
 
 	
 

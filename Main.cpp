@@ -24,8 +24,6 @@ int main(int argc, char* argv[]) {
 
 	deck_from_file = trial_deck.get_Deck();
 
-
-
 	actions Game_run;
 	 cout << "test" << endl;
 	float average = Game_run.average_for_deck(deck_from_file);
