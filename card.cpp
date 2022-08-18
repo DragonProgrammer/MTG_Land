@@ -17,7 +17,14 @@ using std::find;
 using std::stoi;
 using std::strcpy;
 
-card::card() {}
+card::card() {
+
+	CMC = 0;
+	ID = "-"; // might need to be ""
+	Produces = "-";
+
+
+}
 
 void card::set_card(string name, int mana_value, string cost, vector<string> card_types, vector<string> card_super_types, vector<string> card_sub_types, string oracle, string p, string t){
 	ID = name;

@@ -520,21 +520,22 @@ int actions::end_check() {
  * 	functions that return card objects
  ***************************************************************/
 card actions::biggest_in_hand() {
-	card biggest;
+	card biggest_Hand;
 	for (auto card_in_hand : hand) {
 		int CMC = card_in_hand.get_CMC();
-		if (CMC > biggest.get_CMC()) {
-			biggest = card_in_hand;
+		if (CMC > biggest_Hand.get_CMC()) {
+			biggest_Hand = card_in_hand;
 		}
 	}
-	DB("Found biggest in biggest_in_hand   " << biggest, 12);
-	return biggest;
+	DB("Found biggest in biggest_in_hand   " << biggest_Hand, 14);
+	return biggest_Hand;
 }
 
 card actions::biggest_thing_playable() {
 	int total_mana_avalable = usable_mana.size() + mana_from_optional_sources.size();
-
-	card biggest;
+	
+	card biggest_Playable;
+	DB("This is biggest at start of function " << biggest_Playable,14);
 	DB("Total usable mana   " + to_string(total_mana_avalable), 14);
 	for (auto card_in_hand : hand) {
 		if (card_in_hand.is_of_Type("Land") == 1){
@@ -542,20 +543,26 @@ card actions::biggest_thing_playable() {
 		}
 		int CMC = card_in_hand.get_CMC();
 		DB("checking " << card_in_hand << " for biggest", 14);
-		if (CMC <= total_mana_avalable && CMC > biggest.get_CMC()) {
+		if(biggest_Playable.get_CMC() == 0){
+			DB("There is no card yet", 14);
+		}
+		else
+			DB("The biggest playable CMC is " + to_string(biggest_Playable.get_CMC()),14);
+		if (CMC <= total_mana_avalable && CMC > biggest_Playable.get_CMC()) {
+			DB("This CMC is bigger and in the amount avalable", 14);
 			vector<char> mana_cost = card_in_hand.get_Cost();
 			DB("its cost is", 14);
 			DBV(mana_cost,14);
 			DB("checking " << card_in_hand, 13);
 			DBV(mana_cost,13);
 			if (check_mana(mana_cost, 'C') != -1)  
-				biggest = card_in_hand;
+				biggest_Playable = card_in_hand;
 			else
 				DB("do not have mana for it",14);
 		}
 	}
-	DB("Found biggest in biggest_thing_playable   " << biggest, 12);
-	return biggest;
+	DB("Found biggest in biggest_thing_playable   " << biggest_Playable, 14);
+	return biggest_Playable;
 }
 
 /****************************************************************************
@@ -957,7 +964,6 @@ int actions::game_loop(vector<card> input) {
 		DBV( field, -1);
 		DB("\n\nmana before land play", 13);  //TODO update these DB statements to include optional mana
 		DBV( usable_mana, 13);
-
 		biggest_thing_in_hand = biggest_in_hand();
 		DB("biggest thing in hand", 5);
 		DB("\nFIeld 2: " + to_string(field.size()), -1);  //TODO update these DB statements to include optional mana
@@ -1007,6 +1013,10 @@ int actions::game_loop(vector<card> input) {
 
 			card thing_to_play = biggest_thing_playable();
 			string name_thing_to_play = thing_to_play.get_ID();
+			if(name_thing_to_play == "-"){
+				DB("THis is blank card", 14);
+				break;
+			}
 			DB("\nThe card to play is:  " + name_thing_to_play, 14);
 			if(name_thing_to_play.size() == 0)
 				loop_statement = -5;
