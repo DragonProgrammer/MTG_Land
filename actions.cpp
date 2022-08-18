@@ -927,6 +927,7 @@ int actions::game_loop(vector<card> input) {
 	turn_counter = 0;
 	set_deck(input);
 	set_initial_Hand();
+	field.clear();
 	set_state(); // game state imnitializer
 	DB("Initial Hand", 12);
 	DBV(initial_hand, 12);
@@ -938,6 +939,8 @@ int actions::game_loop(vector<card> input) {
 			// end run
 			DBA("Drew all cards in " + to_string(turn_counter) + " turns");
 			set_state();// allows me to make report off of failed run
+			DBA("Field at end of game");
+			DBVA(field);
 			return 0; //indicates failed run
 		}
 		draw_all_Mana(field);
@@ -968,6 +971,9 @@ int actions::game_loop(vector<card> input) {
 		if (loop_statement == -2) DBA( "Multiple calls to play_land() this turn" );
 		if (loop_statement == -3) DBA( "Error removing land from hand" );
 		if (loop_statement == 1) {
+			DBA("Field at end of game");
+			DBVA(field);
+			set_state();// allows me to make report of run
 			return turn_counter;
 		}
 
@@ -1001,6 +1007,9 @@ int actions::game_loop(vector<card> input) {
 
 			loop_statement = end_check();
 			if (loop_statement == 1) {
+				DBA("Field at end of game");
+				DBVA(field);
+				set_state();// allows me to make report off of  run
 				return turn_counter;
 			}
 			DBV(usable_mana, 5);
