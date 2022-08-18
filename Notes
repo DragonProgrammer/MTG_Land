@@ -1,0 +1,32 @@
+
+// Debug levels as of 8-18 dawn (AKA old mess)
+//
+//  o = land search, land play
+// -1 = mana stuff
+// -4 = parse text functions, card creation functions
+// -5 = search effect set up, text trim, type querying
+//
+//  1 - function declation - in average
+//  2 = checking mana cost, 
+//  3 = mode checks, playing biggest thing,  removing mana for colorless,
+//  5, removing colored mana, mana in game loop, lagest thing in game loop
+//  7 = turn counter
+//
+//  12 = game loop stats
+//  13 - card in hand checks
+//  14 - nameing card to play
+//  10 - removing cards from list
+// 20 = Empty/ NO DB
+//
+//  7 = mana function calls
+
+
+values for int loop_statement (was int end_check):
+
+1 = end state reached, end loop
+-1 = no land to play this turn
+-2 = play_Land() called after playing a land this turn
+-3 = tried to remove a card from an vector, and found card not there
+	this would happen if something interupted code execution and deleted a vector element during a funcion
+-4 = no cards to draw, returned from draw_card()
+-5 = nothing to play

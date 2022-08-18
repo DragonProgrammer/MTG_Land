@@ -30,6 +30,9 @@ int main(int argc, char* argv[]) {
 	 cout << "test" << endl;
 	float average = Game_run.average_for_deck(deck_from_file);
 	 cout << "test" << endl;
-	cout << "The average for the deck is " << to_string(average) << endl;
+	 if(average == 0)
+		 cout << "All games failed";
+	 else
+		 cout << "The average for the deck is " << to_string(average) << endl;
 	return 0;
 }

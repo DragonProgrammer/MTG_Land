@@ -99,7 +99,7 @@ int actions::draw_card() {
 		deck.erase(deck.begin());
 		return 0;
 	} else
-		return -1;
+		return -4;
 }
 
 
@@ -224,16 +224,16 @@ int actions::land_search() {
 				if(land_Endpoint == "Hand" ){
 					hand.push_back(found_land);
 				}
-				if (remove_card(found_land, deck) == -1) {
-					return -2;
+				if (remove_card(found_land, deck) == -3) {
+					return -3;
 				}  // somethuing happeded that remved land from deck premachurly
 
 				if (found_number == Num_lands)
 					break;
 			}
 		}
-		if( remove_card(land_searcher, field) == -1 )
-			return -2; //TODO difenciate this from the land removal
+		if( remove_card(land_searcher, field) == -3 )
+			return -3; //TODO difenciate this from the land removal
 		return 0; //all lands found
 	} else  // if size == 0
 		return -1;  // no lands of target in deck
@@ -366,12 +366,12 @@ int actions::play_Land() {
 		field.push_back(played_land);  //TODO create put on field function that checks if enters taped
 
 		DB("\nRemoving from hand and initial hand", 10);
-		if (remove_card(played_land, hand) == -1) {
-			return -2;
+		if (remove_card(played_land, hand) == -3) {
+			return -3;
 		};
 		DBV(hand, 10);
-		if (remove_card(played_land, initial_hand) == -1) {
-			return -2;
+		if (remove_card(played_land, initial_hand) == -3) {
+			return -3;
 		}
 		DB("\ninitial Hand", 10);
 		DBV(initial_hand, 10);
@@ -392,6 +392,7 @@ int actions::play_Land() {
 void actions::draw_all_Mana(vector<card>& in_play) {
 	if(in_play.size() > 0) {
 	for (auto& card_on_field : in_play) {
+		DB( "the  " << card_on_field << "  produces  " << card_on_field.get_Produces(), 13);
 		if (card_on_field.get_Produces() != "-" &&
 		    toupper(card_on_field.get_Mode()) == 'U') {
 			DB("Mode change", 3);
@@ -440,8 +441,8 @@ int actions::play_biggest_thing(card Big_thing) {
 	hand = hand;
 
 	if (Big_thing.get_ID().length() == 0) {
-		DB("Nothing More to play",12);
-		return -1;
+		DBA("Nothing More to play");
+		return -5;
 	}
 	vector<char> mana_cost = Big_thing.parse_Cost();
 	check_mana(mana_cost, 'P');  //call needs to be updated TODO<<--- does it ?
@@ -451,15 +452,15 @@ int actions::play_biggest_thing(card Big_thing) {
 	DB( "\nRemoving from hand and initial hand", 10);
 
 	field.push_back(Big_thing);  // enter field state check TODO
-	if (remove_card(Big_thing, hand) == -1) {
-		return -2;
+	if (remove_card(Big_thing, hand) == -3) {
+		return -3;
 	};
 
 	DB( "\nhand", 10);
 	DBV(hand, 10);
 
-	if (remove_card(Big_thing, initial_hand) == -1) {
-		return -2;
+	if (remove_card(Big_thing, initial_hand) == -3) {
+		return -3;
 	};
 	DB("\nInitial hand", 10);
 	DBV(initial_hand, 10);
@@ -482,8 +483,8 @@ int actions::play_biggest_thing(card Big_thing) {
 
 int actions::remove_card(card to_remove, vector<card>& remove_from) {
 	string remove_ID = to_remove.get_ID();
-	if (end_check() == -1) {
-		return -2; //was -1, changed to go along with what other function arros ar looking for
+	if (end_check() == 1) {
+		return 1; //was -1, changed to go along with what other function arros ar looking for
 	}  // need to chang here  - do not think so anymore
 	for (int i = 0; i < int(remove_from.size()); i++) {
 		if (remove_from[i].get_ID() == remove_ID) {
@@ -492,7 +493,7 @@ int actions::remove_card(card to_remove, vector<card>& remove_from) {
 		}
 	}
 	DB("\nNot it selection", 10);
-	return -1; //was 0 changed to go along with what other function errors are looking for
+	return -333; //was 0 changed to go along with what other function errors are looking for
 }
 
 //---------------------------------------------
@@ -509,7 +510,7 @@ int actions::remove_card(card to_remove, vector<card>& remove_from) {
 
 int actions::end_check() {
 	if (initial_hand.size() < 1) {
-		return -1;
+		return 1;
 	}
 	return 0;
 }
@@ -526,24 +527,27 @@ card actions::biggest_in_hand() {
 			biggest = card_in_hand;
 		}
 	}
-	DB("Found biggest in biggest_in_hand   " << biggest, 13);
+	DB("Found biggest in biggest_in_hand   " << biggest, 12);
 	return biggest;
 }
 
 card actions::biggest_thing_playable() {
 	int total_mana_avalable = usable_mana.size() + mana_from_optional_sources.size();
+
 	card biggest;
+	DB("Total usable mana   " + to_string(total_mana_avalable), 13);
 	for (auto card_in_hand : hand) {
 		int CMC = card_in_hand.get_CMC();
+		DB("checking " << card_in_hand << " for biggest", 12);
 		if (CMC <= total_mana_avalable && CMC > biggest.get_CMC()) {
 			vector<char> mana_cost = card_in_hand.parse_Cost();
-			DB("checking " << card_in_hand, 13);
+			DB("checking " << card_in_hand, 12);
 			DB(card_in_hand, 13); // will want to check in course of mathing optional lands
 			if (check_mana(mana_cost, 'C') != -1)  
 				biggest = card_in_hand;
 		}
 	}
-	DB("Found biggest in biggest_thing_playable   " << biggest, 13);
+	DB("Found biggest in biggest_thing_playable   " << biggest, 12);
 	return biggest;
 }
 
@@ -901,17 +905,20 @@ float actions::average_for_deck(vector<card> input) {
 	int failed_games = 0; //TODO posiblby make this an extern so i can output it in report
 	
 	DB("In Average function", 1);
-	for (int run = 0; run < total_runs; run++) {
+	for (int run = 1; run <= total_runs; run++) {
 		int turns = game_loop(input);
 		if(turns == 0){
 			failed_games++;
-			DB("Game failed", 12);
+			DBA("Game " << to_string(run) << " failed");
 			continue;
 			}
-		DB("\nTook " + to_string(turns) + " turns.\n\n", 12);
+		DBA("\nGame " + to_string(run) + "    took " + to_string(turns) + " turns.\n\n");
 		total_turns += turns;
 	}
 	DB(total_turns, 10); // will have to check with failed games math later
+	DBA("This deck resulted in " + to_string(failed_games) + " out of " + to_string(total_runs) + " games");
+	if(total_runs-failed_games == 0)
+		return 0;
 	float average_turns = float(total_turns) / float(total_runs-failed_games);
 	return average_turns;
 }
@@ -925,18 +932,19 @@ int actions::game_loop(vector<card> input) {
 	DBV(initial_hand, 12);
 	while (1 == 1) {
 		new_turn(field);
-		DB("This is turn:   " + to_string(turn_counter) + "\n", 12);
-		if (draw_card() == -1) {
+		DB("This is turn:   " + to_string(turn_counter) + "\n", 13);
+		int loop_statement = draw_card();
+		if (loop_statement == -4) {
 			// end run
-			DB("Drew all cards in " + to_string(turn_counter) + " turns", 12);
+			DBA("Drew all cards in " + to_string(turn_counter) + " turns");
 			set_state();// allows me to make report off of failed run
 			return 0; //indicates failed run
 		}
 		draw_all_Mana(field);
 		DB("\nFIeld 1: " + to_string(field.size()), -1);  //TODO update these DB statements to include optional mana
 		DBV( field, -1);
-		DB("\n\nmana before land play", -1);  //TODO update these DB statements to include optional mana
-		DBV( usable_mana, -1);
+		DB("\n\nmana before land play", 13);  //TODO update these DB statements to include optional mana
+		DBV( usable_mana, 13);
 
 		biggest_thing_in_hand = biggest_in_hand();
 		DB("biggest thing in hand", 5);
@@ -953,24 +961,46 @@ int actions::game_loop(vector<card> input) {
 		// check if played last card with land
 	//	int land_options = land_search();
 		DB("\nFIeld 5: " + to_string(field.size()), -1);  //TODO update these DB statements to include optional mana
-		int end_check = play_Land();
-		if (end_check == -1) DB( "no lands to play this turn", 12);
-		if (end_check == -2) {
+	
+	//play lands section
+		loop_statement = play_Land();
+		if (loop_statement == -1) DBA( "no lands to play "<< to_string(turn_counter) );
+		if (loop_statement == -2) DBA( "Multiple calls to play_land() this turn" );
+		if (loop_statement == -3) DBA( "Error removing land from hand" );
+		if (loop_statement == 1) {
 			return turn_counter;
 		}
 
 		draw_all_Mana(field);// adds mana from new land
 		DB("\nFIeld 6: " + to_string(field.size()), -1);  //TODO update these DB statements to include optional mana
 		set_state();
-		DB("\n\nmana after land play", 5);
+		DB("\n\nmana after land play", 13);
 		DB("\nFIeld 7: " + to_string(field.size()), -1);  //TODO update these DB statements to include optional mana
-		DBV(usable_mana, 5);
-		while ((end_check = play_biggest_thing(biggest_thing_playable())) != -1) {
+		DBV(usable_mana, 13);
+		while(0==0){
+			int mana_available_check = usable_mana.size() + mana_from_optional_sources.size();
+			if (mana_available_check == 0){
+				DBA("Done casting things");
+				break;
+			}
+
+			card thing_to_play = biggest_thing_playable();
+			string name_thing_to_play = thing_to_play.get_ID();
+			DB("The card to play is:  " + name_thing_to_play, 14);
+			if(name_thing_to_play.size() == 0)
+				loop_statement = -5;
+			if (loop_statement == -5){
+				DBA("Cant play anything");
+				break;
+			}
+			loop_statement = play_biggest_thing(biggest_thing_playable());
 			// check if played last card with big thing
 			
+			if (loop_statement == -3) DBA( "Error removing biggest_thing from hand" );
 			set_state(); // each spell makes a new gamestate
 
-			if (end_check == -2) {
+			loop_statement = end_check();
+			if (loop_statement == 1) {
 				return turn_counter;
 			}
 			DBV(usable_mana, 5);
