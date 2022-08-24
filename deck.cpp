@@ -92,12 +92,6 @@ void deck::make_Deck_List(string deck_file){
 		card_list.push_back(card_for_deck); // add to decklist
 	}
 
-	int deck_size = card_list.size();
-	int deck_deviation = 60 - deck_size;
-	if( deck_deviation != 0 ){
-		cout << "The deck is off by " << deck_deviation << " cards" << endl;
-		wrong_size_flag = 1;
-	}
 //set class variable
 	class_deck_list = card_list;
 }
@@ -172,6 +166,12 @@ void deck::create_Deck( vector<card_listing> deck_list ){
 			working_deck.push_back(cdata);
 		}
 
+	}
+	int deck_size = working_deck.size();
+	int deck_deviation = 60 - deck_size;
+	if( deck_deviation != 0 ){
+		cout << "The deck is off by " << deck_deviation << " cards" << endl;
+		wrong_size_flag = 1;
 	}
 // set class variable
 	class_deck = working_deck;

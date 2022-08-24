@@ -183,6 +183,7 @@ void card::parse_Oracle(){
 	DB("This card Procuces: " + Produces, -4);
 	trim_oracle();
 	parse_text_land_search();
+	DB("This card's effect is " << Card_effect, -4);
 	trim_oracle();
 }
 
@@ -191,6 +192,9 @@ void card::parse_Oracle(){
 //	it curently only does "rampant growth" and "evolving wilds"
 //-------------------------------------------------------------------	
 void card::parse_text_land_search(){
+	//NOTE --- Oracle text and card text differ
+	// Card text has ". Then shuffle your library."
+	//  JSON oracle text has ", then shuffle"
 	string effect_string = "Search your library for a basic land card, put it onto the battlefield tapped, then shuffle.";
 	string cost_line = "{T}, Sacrifice " + get_Name() + ":";
 
@@ -208,10 +212,13 @@ void card::parse_text_land_search(){
 
 	size_t effect_start = Oracle_text.find(effect_string);  // needs to be of size_t in order to have npos
 	
-	DB("Oracle Text for " + ID + "      " + Oracle_text, -5);
+	DB("Oracle Text for " + ID + "      " + Oracle_text, -4);
+	DB("I am looking for: " + cost_line, -4);
+	DB("Found at: " + to_string(effect_start), -4);
+
 
 	if( effect_start != string::npos){
-		DB("In Search effect set-up", -5);
+		DB("In Search effect set-up", -4);
 		DB("", -5);
 		E_Type = "Search";
        		E_Source = "Library";
@@ -219,6 +226,7 @@ void card::parse_text_land_search(){
 		E_Numeric = 1;
 		E_Endpoint = "Field";
 		E_State = "Tapped";
+		E_Cost = "Tap";
 		search_flag = 1;
 		DB("After declaration the recoreded state is: " + E_State, -4);  // had + not = as declaration
 	}
@@ -417,6 +425,6 @@ ostream& operator<<(ostream& os, const card& cd) {
 	else
 		return (os << cd.ID + " " + to_string(cd.CMC) + " " + cd.Cost + " " + type_line + " " + cd.Oracle_text + " " + cd.Power + "/" + cd.Toughness  +  "        ");
 **/
-
-	return (os << cd.ID + " "+ cd.Cost_string + "       ");
+		return (os << cd.ID + " "+ cd.Cost_string + "      ");
+		
 }

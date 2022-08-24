@@ -1,0 +1,15 @@
+Daysquad Marshal; 4
+Garrison Cat; 4
+Lurking Deadeye; 4
+Bushmeat Poacher; 4
+Sanctuary Lockdown; 2
+General's Enforcer; 1
+Dire Tactics; 2
+Checkpoint Officer; 3
+Mutual Destruction; 2
+Nightsquad Commando; 3
+Perimeter Sergeant; 3
+Bastion of Remembrance; 2
+Evolving Wilds; 10 
+Swamp; 8
+Plains; 8

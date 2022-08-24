@@ -170,6 +170,17 @@ int actions::land_search() {
 	for (auto card_on_field : field) {
 		//see if there is a search effect on the field, and that the cost is payable
 		//TODO add in mana cost
+		DB(card_on_field.get_Effect().get_Eff_Type(), 0);	
+		if (card_on_field.get_Effect().get_Eff_Type() == "Search"){
+		       DB("Found Search", 0);
+		       if (card_on_field.get_Effect().get_Eff_Cost().find("Tap") != string::npos){
+			      DB("Found Tap", 0);
+			     if(card_on_field.get_Mode() == 'U'){
+				    DB("Found card Untaped", 0);
+			     }
+		       }
+		} 
+		
 		if (card_on_field.get_Effect().get_Eff_Type() == "Search" &&
 		    card_on_field.get_Effect().get_Eff_Cost().find("Tap") != string::npos &&
 		    card_on_field.get_Mode() == 'U') 
@@ -178,17 +189,14 @@ int actions::land_search() {
 			search_found_flag = 1;
 			land_searcher = card_on_field;  //at this point is search_avalability function either add this card to found vector or just return this card
 
-
 		//set up variable to determine effects of search
 			search_Effect = card_on_field.get_Effect();
-
 			search_Target = search_Effect.get_Eff_Target_Type();
 			land_Endpoint = search_Effect.get_Eff_Endpoint();
 			land_State = search_Effect.get_Eff_State();
 			Num_lands = search_Effect.get_Eff_Target_Numeric();
 			
 		}
-
 	}
 	if (search_found_flag == 0 )
 		return 1; // no land search found
@@ -977,7 +985,10 @@ int actions::game_loop(vector<card> input) {
 		DB("\nFIeld 4: " + to_string(field.size()), -1);  //TODO update these DB statements to include optional mana
 
 		// check if played last card with land
-	//	int land_options = land_search();
+		int land_options = land_search();
+		if(land_options == -1){
+			DBA("no lands of search target found");
+		}//TODO Add in other DBs for 0 = no search found and 1 = all lands found
 		DB("\nFIeld 5: " + to_string(field.size()), -1);  //TODO update these DB statements to include optional mana
 	
 	//play lands section
