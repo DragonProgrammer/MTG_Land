@@ -24,6 +24,10 @@ int main(int argc, char* argv[]) {
 
 	deck_from_file = trial_deck.get_Deck();
 
+	if (trial_deck.get_flags() != 0){
+		cout << "Error with deck input" << endl;
+		return 0;
+	}
 	actions Game_run;
 	 cout << "test" << endl;
 	float average = Game_run.average_for_deck(deck_from_file);

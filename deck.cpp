@@ -24,11 +24,14 @@ deck::deck() {}
 
 deck::deck(string file_name){
 
+	wrong_card_flag = 0;
+	wrong_size_flag = 0;
 	make_Deck_List(file_name);
 	vector<card_listing> list = get_Deck_List();
 	create_Deck(list);
 }
 
+int deck::get_flags(){ return wrong_card_flag + wrong_size_flag;}
 vector<card_listing> deck::get_Deck_List(){ return class_deck_list;}
 
 vector<card> deck::get_Deck(){ return class_deck;}
@@ -65,6 +68,7 @@ void deck::make_Deck_List(string deck_file){
 // 	this will later have code for deck names
 		if (split_loc == string::npos){ 
 			cout << endl <<"Can not split: " << deck_line << endl;
+			wrong_card_flag = 1;
 			continue;
 		}
 		
@@ -88,7 +92,12 @@ void deck::make_Deck_List(string deck_file){
 		card_list.push_back(card_for_deck); // add to decklist
 	}
 
-
+	int deck_size = card_list.size();
+	int deck_deviation = 60 - deck_size;
+	if( deck_deviation != 0 ){
+		cout << "The deck is off by " << deck_deviation << " cards" << endl;
+		wrong_size_flag = 1;
+	}
 //set class variable
 	class_deck_list = card_list;
 }
@@ -109,6 +118,7 @@ void deck::create_Deck( vector<card_listing> deck_list ){
 
 		if( !mtgcards.contains( deck_list[c].name ) ){   //input sanitation: spelling error
 			cout << endl << deck_list[c].name << "  is not a card" << endl;
+			wrong_card_flag = 1;
 			continue;
 		}
 
