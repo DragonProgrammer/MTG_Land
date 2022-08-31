@@ -97,21 +97,11 @@ vector<char> card::parse_Cost(string cost_string) {
 }
 
 vector<char> card::get_Cost(){return Cost;}
-//TODO  rework based on oracle text
-//TODO figure out why make is giving a "undefined referance to mana::mana(char ..."
-// commented out due compiler error and not used at this poitn
-
-
 
 
 vector<mana> card::parse_Produces() {
 	vector<mana> from_source;
 	unsigned int spot = 0;
-//	if(Produces.find('_')>-1){
-//		mana produced(Produces, ID);
-//		from_source.push_back(produced);
-//		return from_source;
-//	}
 
 
 	while (spot < Produces.length()) {
@@ -287,7 +277,6 @@ void card::parse_text_enters(){
 		DB("Old Oracle text: " + Oracle_text,-4);
 		Oracle_text.replace(start, len, "");
 		DB("New Oracle text: " + Oracle_text, -4);
-		//TODO add function that removes text from oracle
 	}
 }
 
@@ -357,8 +346,6 @@ string card::trim_mana_string(string m) {
 //		is_of_type
 //		is_castable_CMC_based //TODO
 //************************************************************
-//
-//
 int card::is_of_Type(string query){
 	vector<string> query_types;
        	boost::split(query_types, query, boost::is_any_of(" "));

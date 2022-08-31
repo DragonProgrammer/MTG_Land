@@ -51,9 +51,6 @@ vector<card> actions::get_deck() { return deck; }
  ***********************************************************/
 
 void actions::set_deck(vector<card> from_main) {
-	//	srand(unsigned(time(0)));
-
-	//	random_shuffle(from_main.begin(), from_main.end());
 	default_random_engine rng(
 	    std::chrono::system_clock::now().time_since_epoch().count());
 	shuffle(from_main.begin(), from_main.end(), rng);
@@ -90,11 +87,13 @@ void actions::new_turn(vector<card>& in_play) {
 	turn_counter++;
 	Land_per_turn_flag = 0;
 	usable_mana.clear();
-	DB("\nTurn " + to_string(turn_counter), 7);
+	DB("\nTurn " + to_string(turn_counter), 0
+			);
 }
 
 int actions::draw_card() {
 	if (deck.size() > 0) {
+		DB("Draw " + deck[0].get_Name(), 1);
 		hand.push_back(deck[0]);
 		deck.erase(deck.begin());
 		return 0;
@@ -170,22 +169,12 @@ int actions::land_search() {
 	for (auto card_on_field : field) {
 		//see if there is a search effect on the field, and that the cost is payable
 		//TODO add in mana cost
-		DB(card_on_field.get_Effect().get_Eff_Type(), 0);	
-		if (card_on_field.get_Effect().get_Eff_Type() == "Search"){
-		       DB("Found Search", 0);
-		       if (card_on_field.get_Effect().get_Eff_Cost().find("Tap") != string::npos){
-			      DB("Found Tap", 0);
-			     if(card_on_field.get_Mode() == 'U'){
-				    DB("Found card Untaped", 0);
-			     }
-		       }
-		} 
 		
 		if (card_on_field.get_Effect().get_Eff_Type() == "Search" &&
 		    card_on_field.get_Effect().get_Eff_Cost().find("Tap") != string::npos &&
 		    card_on_field.get_Mode() == 'U') 
 		{
-			DB("found Land search", 0);
+			DB("found Land search", 3.1);
 			search_found_flag = 1;
 			land_searcher = card_on_field;  //at this point is search_avalability function either add this card to found vector or just return this card
 
@@ -228,7 +217,7 @@ int actions::land_search() {
 						field[field.size() - 1].set_Mode('T');
 					else
 						field[field.size() - 1].set_Mode('U');
-					}
+					} 
 				if(land_Endpoint == "Hand" ){
 					hand.push_back(found_land);
 				}
@@ -262,7 +251,7 @@ int actions::land_search() {
 //this function returns a land card from a  given a card vector (hand or deck) based on a vector of mana need
 //TODO add 2 char flags to this for cards that search for only a basic, basic or gate, ext.
 //	posibility this sifting may be done in another function whose results are passed to this
-//TODO add subtype to card traits
+//TODO add a forward looking check that sees "If i have a multicolored/teramorfic/tap land and a basic, If I play the basic will still not be able to play a card. If so play nonbasic" 
 //---------------------------------------------------------------------------------------
 //
 //-----------------------------------------------------------------------------
@@ -270,20 +259,27 @@ int actions::land_search() {
 //-----------------------------------------------------------------------------
 card actions::find_land(vector<card> lands) {
 	vector<string> deciding_vector = compute_need();
-	DBV(deciding_vector, -1);
+	DB("this is the need vector when finding lands", 3.2);
+	DBV(deciding_vector, 3.2);
 	card played_land;
 //	for (auto mana_need : deciding_vector) {
 	for(int i = 0; i < 6; i++){
 		string mana_need = deciding_vector[i];
 		char land_color = mana_need[mana_need.length()-1];// this should return the mana symbol of the float string
-		DB("mana need " << land_color, 0);
+		DB("Mana looking for " << land_color, 0);
 		for (auto selected_card : lands) {
-			mana basic_test = selected_card.parse_Produces()[0]; // this should give me the mana a land could produce if it only proicuded one mana
-			DB("\n\nTHis is the basic land mana:  " << basic_test << "\n\n\n", 7);
+			
+
+			if(selected_card.is_of_Type("Basic")){
+				mana basic_test = selected_card.parse_Produces(); // this should give me back one man 
+				if( basic_test.size() > 1){
+					DBA(selected_card.get_Name() + " is a Basic, but produces more then 1 mana"); //TODO incoperate mana doublers
+				}
+				DB("\nTHis is the basic land mana:  " << basic_test << "\n", 3.2);
 			if (selected_card.get_Enters() == 'U' &&
 			    basic_test.can_produce(land_color)) {
 				played_land = selected_card;
-				DB("return land optuion: basic", -1);
+				DB("return land option: basic", 3.2);
 				return played_land;
 			}
 		}
