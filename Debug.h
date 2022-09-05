@@ -6,7 +6,7 @@ using std::cerr;
 using std::endl;
 using std::vector;
 typedef vector< vector<float> > vec;
-#define DB_FLAG vector<float>({0,12})
+#define DB_FLAG vector<int>({0,12})
 #define DBA(x)do{cerr << x << endl;}while(0)
 #define DBVA(x) do{for(auto h : x) { cerr << h << "  ";}cerr << endl; } while(0)
 //#define DB(x, level) if(DB_FLAG == level)do{cerr << x << endl;}while(0)
@@ -24,20 +24,12 @@ typedef vector< vector<float> > vec;
 
 // Debug levels
 //
-//  o = land search, land play
-// -1 = mana stuff
-// -4 = parse text functions, card creation functions
-// -5 = search effect set up, text trim, type querying
+// DBA :
+// 	Average_for_deck():
+// 		Anmounce game fail
+// 		State number of turns the game took
+// 		State how many games failed out of the number of full runs
+// 		State the average for the deck
 //
-//  1 - function declation - in average
-//  2 = checking mana cost, 
-//  3 = mode checks, playing biggest thing,  removing mana for colorless,
-//  5, removing colored mana, mana in game loop, lagest thing in game loop
-//  7 = turn counter
-//
-//  12 = game loop stats
-//  13 - card in hand checks
-//  10 - removing cards from list
-// 20 = Empty/ NO DB
-//
-//  7 = mana function calls
+//  0 - - - - - -
+//  	0.25 - Math for averages of deck - average_for_deck() - TODO check against failed runs

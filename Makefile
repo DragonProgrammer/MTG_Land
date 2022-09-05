@@ -37,7 +37,7 @@ LIBS          =
 LDFLAGS       = $(shell pkg-config --libs $(LIBS)) -ltinfo 
 
 all: main 
-main: actions.o deck.o Main.o card_parse.o card.o Debug.h effect.o mana.o
+main: actions.o deck.o Main.o card_parse.o card.o Debug.h effect.o mana.o game_data.o
 	$(CXX) $(CXXFLAGS) -o $@ $^
 
 

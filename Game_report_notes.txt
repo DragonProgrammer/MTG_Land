@@ -1,0 +1,177 @@
+Each game should have a report I can evaluate. 
+
+The following are notes on:
+
+	1) The basic purpose of the report
+	2) What data will be neccesary to complete that purpose and how that dat is formated.
+	3) Data that should be logged to evaluate the programs 'AI'
+
+__________________________________________________________________________________
+
+The Purpose Of the mai nProgem:
+	I made this program to evaluate several (100+) decks I have made for teaching purposes. 
+
+	In order to effectively use them for teaching I need to be able to pair the decks up with others of similar performance. This is run in an unopposed evaluation. For game tuerms unopposed means the opponent does nothing, it is just a target with 20 life. (See Combat evaluation for data on opposed measruing). I measure performance in a few catagories:
+
+		1) How fast does the deck output damage:
+			Measured as the average for the deck to deal 20 damage to the opponent.  
+			Addtional threshoulds of 30, and 40 will be added to simulate a bit of basic opposition (the opponent blockd a few creatures or some burn was used to kill creature)
+
+		2) How fast does the deck play spells:
+			Measured by the average of how many turns it takes to play all spells in the opening hand.
+			THe program is designed to play the biggest (CMC) thing it can first then work down; even if these cards are not from the opening hand.
+				This is used to simulate how bigger CMC cards tend to have a geatere impact on the game and how newwer players will tend to cast them first.
+			Current program implementation, does not worry about what a card is or does.
+				Meaning that it will cast Auras without any valid things to enchant and removal spells when the oppenent is just life points.
+			Later I will measuremnts of then the deck can cast 2 spells a turn and when this deck starts top-decking.
+
+		3) How fast is the mana ramp:
+			Measured as a set of averages of the turn it takes to get to specific mile stones.
+				Some of these milestones include the turn the deck gets to 3 mana, 5 mana, 7 mana, (ext); the turn the deck could cast the biggest thing it has (irrelevent of if it was in its hand)
+				At a later implementation I could add in a milestone for "When do lockets become recundant" (aka when do i use the manafact for card draw)
+			Another measurement is the number of turns that the deck does not play a land (or for later implementation a mana source).
+			Currently the decks are set up with 20 lands and may include a few manafacts. THis land amount is under what Arena recomends for its algorithm, and was done so i could spread out lands between more decks.
+			This measurement is designed to evaluate the effect on the decks output when I change the count of mana sources.
+
+		4) How fast does this deck see new cards:
+			Measured by the average of the time it takes to get to a deck size of 30.
+			Except for a few decks with a big draw engine or multiple land searches, this will be pretty much even across the board at 20 - 23 turns. 
+			Due to large turn count this number might not be reached for many decks when i implement "STOP if you WON" functionality. 
+
+
+
+
+As the main purpose of this program is the evaluation and ranking of the teaching decks i have made, each game needs to have some elements recoreded.
+------------------------------------------------------------------------------------------------------------------
+
+Data to record for purposr
+..
+
+
+--------------------------
+----------------------
+----------------------------------------------------------------------------------------------------------------
+What should be recordeded:
+
+Deck Name : ----------
+
+Deck Info:
+	Deck Colors: -----        Color Percentage: ------  Multi-colored:Mono-colored card ratio
+
+	Largest Mana Cost in deck: Name & Mana Cost
+
+	Mana Cost Percentages: (CMC amounts,  number of mana symbols)
+
+	Mana Source Data:
+		Mana Source Number: --    Percent Cards that are mana Sources    Lands : Non-land sources ratio
+		
+		Mana Color Percentage: -----    Colorless : single color : Multiple colors Sources count
+
+		 
+	Card Lists:
+		
+		List Of lands		List other Mana Sources  	List Creatures 
+  					   mark Creatures with C	  mark Mana-sources with  MS
+
+
+	-------------------------------------------------------------------------------------
+
+Game Cycle Start	
+
+--------
+	
+Initial Hand
+	Number of Lands in Opening Hand		Number of Turns Till The first Spell cast
+							First Spell it can cast  
+
+
+Total Turn Count
+
+Game Mana Data
+
+	Turns that Amount of mana Exceeded Turn Count: -
+
+	Turns Without Land Drop ---     Turns Other mana Sourcers Were Cast ---
+
+	Turn 3 Mana Was Reached   -- 4 mana --- 5 mana  --- 6 mana .... ext
+
+	Turn Largest Thing Could be Cast
+
+	Turn Top Decking Started
+
+Game End Conditions met
+	- Cast Everything in hand	Turn
+	- Reached Middle of Deck	Turn
+	- Dealt lethal Damage		Turn
+	- Dealt more damage intervals	Turns
+
+	----------------------------------------------------------------------------------------
+
+Averages For Deck
+
+Initial Hand Data
+	
+	Average Lands in hand:
+	
+	Average Turns to Play first Spell:
+
+	Number of Times more Mana was needed to play smallest thing in opening hand:
+
+	*If Deck Multi Colored
+	Number of times Multi Colored Opening Hand
+		Based on mana producing lands --
+		Based on the availability of land search
+	
+
+
+Game Mana Data
+
+	Number of games mana count > turn count
+
+	Missed land drops in the first 5 turns:
+		Average Missing only 1:
+	
+		Average Missing only 2:
+
+		Average Missing only 3:
+
+	Average Turn Mana amount was reached:
+		3 Mana:
+
+		4 Mana:
+
+		EXT...
+
+	*If multi Colored
+	Average Turn 2 Colors was Reached:
+
+	Average Turn All Colors was reache:
+
+	Average Turn 2 Sources of Each color Was reached:
+
+
+	Average Turn Largest Thing Could of been played:
+
+	Average Trun Top decking Started:
+
+
+Cast Spells Data
+
+	Smallest Card in Deck: Name CMC 
+
+	Average number of times a spell was not cast on turn:
+
+		Range [Smallest CMC - 10]
+
+
+Average turn to reach game End ConditionsGame:
+	- Cast Everything in hand	Turn
+	- Reached Middle of Deck	Turn
+	- Dealt lethal Damage		Turn
+	- Dealt more damage intervals	Turns
+
+
+----------------------------------------------------------------------------------------------------
+
+Note that the above does not make a breakdown of Damage or creature Count as those features ar not yet implemented.
+	

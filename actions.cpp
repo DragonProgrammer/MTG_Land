@@ -14,6 +14,8 @@
 #include "card.h"
 #include "cost.h"
 #include "mana.h"
+#include "game_data.h"
+
 using std::abs;
 using std::cout;
 using std::default_random_engine;
@@ -36,6 +38,10 @@ vector<card> deck;
 
 vector<mana> usable_mana;  // mana avalable to cast spells
 
+
+Game_Data game_play_record();
+
+vector<Game_Data> deck_loop_data;
 
 int Land_per_turn_flag = 0;
 
@@ -268,16 +274,16 @@ card actions::find_land(vector<card> lands) {
 		char land_color = mana_need[mana_need.length()-1];// this should return the mana symbol of the float string
 		DB("Mana looking for " << land_color, 0);
 		for (auto selected_card : lands) {
-			
+			vector <mana> basic_test;	
 
 			if(selected_card.is_of_Type("Basic")){
-				mana basic_test = selected_card.parse_Produces(); // this should give me back one man 
+				basic_test = selected_card.parse_Produces(); // this should give me back one man 
 				if( basic_test.size() > 1){
 					DBA(selected_card.get_Name() + " is a Basic, but produces more then 1 mana"); //TODO incoperate mana doublers
 				}
-				DB("\nTHis is the basic land mana:  " << basic_test << "\n", 3.2);
+				DB("\n" + selected_card.get_ID() + " is a basic land that produces  " + basic_test[0].get_produced() + "\n", 3.2);
 			if (selected_card.get_Enters() == 'U' &&
-			    basic_test.can_produce(land_color)) {
+			    basic_test[0].can_produce(land_color)) {
 				played_land = selected_card;
 				DB("return land option: basic", 3.2);
 				return played_land;
@@ -919,14 +925,23 @@ void turn_report();
  * The Game
  * 	The functions that determin the order things happen in
  *********************************************************************************************/
+// DEBUG level
+//
+// DBA - Always report the results for each game,  Always report averages for deck ---- TODO add this to a Deck report function
+//
+// 0.25  == Averaging math for decks
+// -------------------------------------------------------------------------------------------
+
 float actions::average_for_deck(vector<card> input) {
+	deck_loop_data.clear();
+	
 	int total_runs = 1; //TODO later make this changeable by input
 	int total_turns = 0;
 	int failed_games = 0; //TODO posiblby make this an extern so i can output it in report
 	
 	DB("In Average function", 1);
 	for (int run = 1; run <= total_runs; run++) {
-		int turns = game_loop(input);
+		int turns = game_loop(input, run);
 		if(turns == 0){
 			failed_games++;
 			DBA("Game " << to_string(run) << " failed");
@@ -935,16 +950,44 @@ float actions::average_for_deck(vector<card> input) {
 		DBA("\nGame " + to_string(run) + "    took " + to_string(turns) + " turns.\n\n");
 		total_turns += turns;
 	}
-	DB(total_turns, 10); // will have to check with failed games math later
-	DBA("This deck resulted in " + to_string(failed_games) + " out of " + to_string(total_runs) + " games");
+
+	DBA("This deck resulted in " + to_string(failed_games) + " failed games, out of " + to_string(total_runs) + " games");
 	if(total_runs-failed_games == 0)
 		return 0;
+
 	float average_turns = float(total_turns) / float(total_runs-failed_games);
+
+	DB("Between " + to_string(total_runs) + " games this deck had " + to_string(failed_games) + ";" 
+			+ "\nit had a total of " + to_string(total_turns) + " turns;"
+			+ "\n resulting in " + to_string(average_turns) + " turns on average.", 0.25); 
+			//TODO check the results of average function
 	return average_turns;
 }
 
-int actions::game_loop(vector<card> input) {
+
+
+/***********************************************************
+ * Loop of game 
+ * *****************/
+ // DEBUG levels:
+ //
+ // DBA - Always report field at end of game,  Always state if you draw all cards, ALways report erros from removing cards
+ // 
+ // 0 -  Initial state
+ //
+ // 1 - mana report		
+
+
+
+int actions::game_loop(vector<card> input, int run) {
+	game_play_data.clear;
+	game_play_data = new Game_Data(run);
+	mana_report newest_mana_report;
+
 	turn_counter = 0;
+
+	turns_without_land_drop = 0;
+
 	set_deck(input);
 	set_initial_Hand();
 	field.clear();
@@ -959,33 +1002,30 @@ int actions::game_loop(vector<card> input) {
 			// end run
 			DBA("Drew all cards in " + to_string(turn_counter) + " turns");
 			set_state();// allows me to make report off of failed run
+			DBA("This game had " + to_string(turns_without_land_drop) + " turns with no lands to play");
 			DBA("Field at end of game");
 			DBVA(field);
 			return 0; //indicates failed run
 		}
 		draw_all_Mana(field);
-		DB("\nFIeld 1: " + to_string(field.size()), -1);  //TODO update these DB statements to include optional mana
-		DBV( field, -1);
-		DB("\n\nmana before land play", 13);  //TODO update these DB statements to include optional mana
-		DBV( usable_mana, 13);
+		
+		newest_mana_report = game_play_data.create_mana_report(usable_mana, mana_from_optional_sources, turn_counter, "Start of turn");
+		
+		DB( report_mana(newest_mana_report) , 1);
+
 		biggest_thing_in_hand = biggest_in_hand();
-		DB("biggest thing in hand", 5);
-		DB("\nFIeld 2: " + to_string(field.size()), -1);  //TODO update these DB statements to include optional mana
+		
 		DB(biggest_thing_in_hand,5);
+		
 		mana_need_to_play_biggest = compute_need();
-		DB("\nMana for bigest",5);
-		DB("\nFIeld 3: " + to_string(field.size()), -1);  //TODO update these DB statements to include optional mana
-		DBV( mana_need_to_play_biggest, 5);
 
 		set_state(); // first set of options
-		DB("\nFIeld 4: " + to_string(field.size()), -1);  //TODO update these DB statements to include optional mana
 
 		// check if played last card with land
 		int land_options = land_search();
 		if(land_options == -1){
 			DBA("no lands of search target found");
 		}//TODO Add in other DBs for 0 = no search found and 1 = all lands found
-		DB("\nFIeld 5: " + to_string(field.size()), -1);  //TODO update these DB statements to include optional mana
 	
 	//play lands section
 		loop_statement = play_Land();
@@ -1006,11 +1046,9 @@ int actions::game_loop(vector<card> input) {
 			return 0;
 		}
 		draw_all_Mana(field);// adds mana from new land
-		DB("\nFIeld 6: " + to_string(field.size()), -1);  //TODO update these DB statements to include optional mana
+		
 		set_state();
-		DB("\n\nmana after land play", 13);
-		DB("\nFIeld 7: " + to_string(field.size()), -1);  //TODO update these DB statements to include optional mana
-		DBV(usable_mana, 14);
+		
 		while(0==0){
 			int mana_available_check = usable_mana.size() + mana_from_optional_sources.size();
 			if (mana_available_check == 0){
