@@ -31,5 +31,33 @@ typedef vector< vector<float> > vec;
 // 		State how many games failed out of the number of full runs
 // 		State the average for the deck
 //
+//	Game_loop():
+//		Multiple calls to play_land()
+//		Error removing cads from location
+//
+//
 //  0 - - - - - -
 //  	0.25 - Math for averages of deck - average_for_deck() - TODO check against failed runs
+//  	0.5  - Creation of end condtions - set_end_conditions()
+//
+//  1 - - - - - - 
+//  	1    - turn counter - game_loop()
+//  	1.1  - initial hand - game_loop()
+//  	1.25 - card draw    - draw_card()
+//	
+//  2 - - - - - - - MANA REPORTS	
+//	2.1  - start of turn report  - game_loop()
+//	2.2  - after land report     - game_loop() TODO
+//	2.3  - during card play loop - game_loop() TODO
+//	2.4  - end of turn report    - game_loop() TODO
+//
+//  3 - - - - - - - LAND PLAY
+//  	3    - Playing the land      - play_Land()
+//  	3.2  - No lands to play      - game_loop()
+//
+//  4 - - - - - - - CAST SPELL
+//  	4    - Declare Cast	     - Game_loop()
+//  	4.1  - Casting details       - Cast_biggest_thing() TODO
+//  	4.25 - Field change in loop  - Game_loop()
+//  	4.3  - pre-cast nameing      - Game_loop()
+//  	4.4  - ran out of mana       - Game_loop()

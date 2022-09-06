@@ -49,13 +49,14 @@ int turn_counter = 0;
 
 int mana_sources =0;
 
+/***********************************************************
+ *  DECK FUNCTIONS
+ *  ********************************************************/
+
 vector<card> actions::get_deck() { return deck; }
 
-/************************************************************
- * Game Actions
- * 	The part of the game the is seen
- ***********************************************************/
 
+//This will shuffle a selection of cards and make them the deck
 void actions::set_deck(vector<card> from_main) {
 	default_random_engine rng(
 	    std::chrono::system_clock::now().time_since_epoch().count());
@@ -63,6 +64,47 @@ void actions::set_deck(vector<card> from_main) {
 
 	deck = from_main;
 }
+
+
+int actions::draw_card() {
+	if (deck.size() > 0) {
+		DB("Draw " + deck[0].get_Name(), 1);
+		hand.push_back(deck[0]);
+		deck.erase(deck.begin());
+		return 0;
+	} else
+		return -4;
+}
+
+
+
+/***********************************************************
+ *  GAME STATE FUNCTIONS
+ *  ********************************************************/
+
+GameState get_state(){ return state[state.size() -1]; }
+
+void actions::set_state(){
+	GameState temp;
+	temp.S_hand = hand;
+	temp.S_field= field;
+	temp.S_deck = deck;
+	temp.S_usable_mana = usable_mana;
+	temp.S_turn_counter = turn_counter;
+	temp.S_Land_flag = Land_per_turn_flag;
+	state.push_back(temp);
+}
+
+/************************************************************
+ * HAND FUNCTIONS
+ * 	These functions work with the hand
+ * 		Set initial hand,
+ * 		Mulligan
+ * 		Discarad
+ * 		removing card from slection (can work with any vector<card>
+ * 		finding biggest card
+ ***********************************************************/
+
 
 void actions::set_initial_Hand() {
 	hand.clear();
@@ -74,6 +116,102 @@ void actions::set_initial_Hand() {
 	}
 	initial_hand = hand;
 }
+
+
+	/***************************************************************
+ 	* Card Selection
+ 	* 	functions that return card objects
+ 	***************************************************************/
+
+//---------------------------------------------------------
+// This function returns the Biggest CMC in hand
+// 	If 1 or more cards have the same biggest CMC returns the first found
+// 	returns an empty card if no card in hand has a CMC
+//------------------------------------
+card actions::biggest_in_hand() {
+	card biggest_Hand;
+	for (auto card_in_hand : hand) {
+		int CMC = card_in_hand.get_CMC();
+		if (CMC > biggest_Hand.get_CMC()) {
+			biggest_Hand = card_in_hand;
+		}
+	}
+	DB("Found biggest in biggest_in_hand   " << biggest_Hand, 14);
+	return biggest_Hand;
+}
+
+
+
+//---------------------------------------------------------
+// This function returns the Biggest card in hand that can be played
+// 	If 1 or more cards meet the requirements it returns the first found
+// 	returns an empty card if no card in hand can be cast
+//------------------------------------
+card actions::biggest_thing_playable() {
+	int total_mana_avalable = usable_mana.size() + mana_from_optional_sources.size();
+	
+	card biggest_Playable;
+	DB("This is biggest at start of function " << biggest_Playable,14);
+	DB("Total usable mana   " + to_string(total_mana_avalable), 14);
+	for (auto card_in_hand : hand) {
+		if (card_in_hand.is_of_Type("Land") == 1){
+			continue;
+		}
+		int CMC = card_in_hand.get_CMC();
+		DB("checking " << card_in_hand << " for biggest", 14);
+		if(biggest_Playable.get_CMC() == 0){
+			DB("There is no card yet", 14);
+		}
+		else
+			DB("The biggest playable CMC is " + to_string(biggest_Playable.get_CMC()),14);
+		if (CMC <= total_mana_avalable && CMC > biggest_Playable.get_CMC()) {
+			DB("This CMC is bigger and in the amount avalable", 14);
+			vector<char> mana_cost = card_in_hand.get_Cost();
+			DB("its cost is", 14);
+			DBV(mana_cost,14);
+			DB("checking " << card_in_hand, 13);
+			DBV(mana_cost,13);
+			if (check_mana(mana_cost, 'C') != -1)  
+				biggest_Playable = card_in_hand;
+			else
+				DB("do not have mana for it",14);
+		}
+	}
+	DB("Found biggest in biggest_thing_playable   " << biggest_Playable, 14);
+	return biggest_Playable;
+}
+
+
+//-------------------------------------------------
+//removes a card from a given vector
+//
+//--------------------------------------------------
+//return values
+//
+// 0 = success
+// -1 = not in selection Error
+// -2 = game should end, nothing in intial hand TODO figure out why here
+// ----------------------------------------------------------------------
+// TODO Test with changes 
+// --------------------------------------------
+
+
+int actions::remove_card(card to_remove, vector<card>& remove_from) {
+	string remove_ID = to_remove.get_ID();
+	if (end_check() == 1) {
+		DBA("Tried Playing " + to_remove.get_ID() + " after emptying initial hand");
+		return -2; //was -1, changed to go along with what other function arros ar looking for
+	}  // need to chang here  - do not think so anymore
+	for (int i = 0; i < int(remove_from.size()); i++) {
+		if (remove_from[i].get_ID() == remove_ID) {
+			remove_from.erase(remove_from.begin() + i);
+			return 0;
+		}
+	}
+	DB("\nNot it selection", 10);
+	return -1; //was 0 changed to go along with what other function errors are looking for
+}
+
 
 
 //-----------------------------------------------------
@@ -97,31 +235,12 @@ void actions::new_turn(vector<card>& in_play) {
 			);
 }
 
-int actions::draw_card() {
-	if (deck.size() > 0) {
-		DB("Draw " + deck[0].get_Name(), 1);
-		hand.push_back(deck[0]);
-		deck.erase(deck.begin());
-		return 0;
-	} else
-		return -4;
-}
-
 
 //----------------------------------------------------------------
 //This function checks if a given effect is on a card
 //--------------------------------------------------------------
 
 //TODO
-
-
-
-
-
-
-
-
-
 
 
 
@@ -136,9 +255,6 @@ int actions::draw_card() {
 
 //int actions::search_available(){
 	
-
-
-
 
 
 
@@ -263,6 +379,31 @@ int actions::land_search() {
 //-----------------------------------------------------------------------------
 //TODO this function needs to be updated for new card style
 //-----------------------------------------------------------------------------
+card actions::find_basic(vector<card> lands, char mana_want){
+	for (auto selected_card : lands) {
+		vector <mana> basic_test;	
+		if(selected_card.is_of_Type("Basic")){
+		basic_test = selected_card.parse_Produces(); // this should give me back one man 
+		if( basic_test.size() > 1){
+			DBA(selected_card.get_Name() + " is a Basic, but produces more then 1 mana"); //TODO incoperate mana doublers
+		}
+		DB("\n" + selected_card.get_ID() + " is a basic land that produces  " + basic_test[0].get_produced() + "\n", 3.2);
+		if (selected_card.get_Enters() == 'U' && basic_test[0].can_produce(land_color)) {
+			played_land = selected_card;
+			DB(played_land.get_ID() + " is returned as Basic from find_land\n", 3.2);
+			return played_land;
+			}
+		}
+	}
+	return card no_basic;
+}
+
+card actions::find_multi_color_land(vector<card> lands, vector<string> mana_need, char mana_want){
+	for(int second_want = 0; second_want < mana_need.size(); second_want++){
+		mana_want_2 = mana_need[second_want];
+
+
+
 card actions::find_land(vector<card> lands) {
 	vector<string> deciding_vector = compute_need();
 	DB("this is the need vector when finding lands", 3.2);
@@ -273,22 +414,6 @@ card actions::find_land(vector<card> lands) {
 		string mana_need = deciding_vector[i];
 		char land_color = mana_need[mana_need.length()-1];// this should return the mana symbol of the float string
 		DB("Mana looking for " << land_color, 0);
-		for (auto selected_card : lands) {
-			vector <mana> basic_test;	
-
-			if(selected_card.is_of_Type("Basic")){
-				basic_test = selected_card.parse_Produces(); // this should give me back one man 
-				if( basic_test.size() > 1){
-					DBA(selected_card.get_Name() + " is a Basic, but produces more then 1 mana"); //TODO incoperate mana doublers
-				}
-				DB("\n" + selected_card.get_ID() + " is a basic land that produces  " + basic_test[0].get_produced() + "\n", 3.2);
-			if (selected_card.get_Enters() == 'U' &&
-			    basic_test[0].can_produce(land_color)) {
-				played_land = selected_card;
-				DB("return land option: basic", 3.2);
-				return played_land;
-			}
-		}
 		for(auto selected_card : lands) {
 			if(selected_card.get_Produces().length() == 5){//can produce 3 different colors
 				played_land = selected_card;
@@ -477,103 +602,6 @@ int actions::play_biggest_thing(card Big_thing) {
 	return 0;
 }
 
-//-------------------------------------------------
-//removes a card from a given vector
-//
-//--------------------------------------------------
-//return values
-//
-// 0 = success
-// -1 = not in selection Error
-// -2 = game should end, nothing in intial hand TODO figure out why here
-// ----------------------------------------------------------------------
-// TODO Test with changes 
-// --------------------------------------------
-
-
-int actions::remove_card(card to_remove, vector<card>& remove_from) {
-	string remove_ID = to_remove.get_ID();
-	if (end_check() == 1) {
-		return 1; //was -1, changed to go along with what other function arros ar looking for
-	}  // need to chang here  - do not think so anymore
-	for (int i = 0; i < int(remove_from.size()); i++) {
-		if (remove_from[i].get_ID() == remove_ID) {
-			remove_from.erase(remove_from.begin() + i);
-			return 0;
-		}
-	}
-	DB("\nNot it selection", 10);
-	return -333; //was 0 changed to go along with what other function errors are looking for
-}
-
-//---------------------------------------------
-//THis function checks for end of game
-//	only one ending implemented now
-//	   Current end of game is no more cards left from opening hand
-//
-//--------------------------------------------------------
-//return values
-//
-//   0 = end conditions not met, continue
-//  -1 = end condition met, stop loop 
-
-
-int actions::end_check() {
-	if (initial_hand.size() < 1) {
-		return 1;
-	}
-	return 0;
-}
-
-/***************************************************************
- * Card Selection
- * 	functions that return card objects
- ***************************************************************/
-card actions::biggest_in_hand() {
-	card biggest_Hand;
-	for (auto card_in_hand : hand) {
-		int CMC = card_in_hand.get_CMC();
-		if (CMC > biggest_Hand.get_CMC()) {
-			biggest_Hand = card_in_hand;
-		}
-	}
-	DB("Found biggest in biggest_in_hand   " << biggest_Hand, 14);
-	return biggest_Hand;
-}
-
-card actions::biggest_thing_playable() {
-	int total_mana_avalable = usable_mana.size() + mana_from_optional_sources.size();
-	
-	card biggest_Playable;
-	DB("This is biggest at start of function " << biggest_Playable,14);
-	DB("Total usable mana   " + to_string(total_mana_avalable), 14);
-	for (auto card_in_hand : hand) {
-		if (card_in_hand.is_of_Type("Land") == 1){
-			continue;
-		}
-		int CMC = card_in_hand.get_CMC();
-		DB("checking " << card_in_hand << " for biggest", 14);
-		if(biggest_Playable.get_CMC() == 0){
-			DB("There is no card yet", 14);
-		}
-		else
-			DB("The biggest playable CMC is " + to_string(biggest_Playable.get_CMC()),14);
-		if (CMC <= total_mana_avalable && CMC > biggest_Playable.get_CMC()) {
-			DB("This CMC is bigger and in the amount avalable", 14);
-			vector<char> mana_cost = card_in_hand.get_Cost();
-			DB("its cost is", 14);
-			DBV(mana_cost,14);
-			DB("checking " << card_in_hand, 13);
-			DBV(mana_cost,13);
-			if (check_mana(mana_cost, 'C') != -1)  
-				biggest_Playable = card_in_hand;
-			else
-				DB("do not have mana for it",14);
-		}
-	}
-	DB("Found biggest in biggest_thing_playable   " << biggest_Playable, 14);
-	return biggest_Playable;
-}
 
 /****************************************************************************
  * Mana manipulationn
@@ -1092,16 +1120,85 @@ int actions::game_loop(vector<card> input, int run) {
 	}
 }
 
-/*************************************GAME STATE ******************************************/
 
-void actions::set_state(){
-	GameState temp;
-	temp.S_hand = hand;
-	temp.S_field= field;
-	temp.S_deck = deck;
-	temp.S_usable_mana = usable_mana;
-	temp.S_turn_counter = turn_counter;
-	temp.S_Land_flag = Land_per_turn_flag;
-	state.push_back(temp);
+//********************************************************
+//GAME END FUNCTIONS
+//	These functions check if I met a predeturmined kill point or a state based action that kills me
+//	Predetermined end points are:
+//		"Empty Initial Hand"
+//		"Deal Lethal Damage" TODO
+//		"Deal Lethal Damage + X" TODO
+//		"Get to Turn X" // Implemented in new_turn
+//		"State Based Actions" //implemented where relevent - always assumed to be looked for
+//	These functions will change the end_flag from 0 to 1
+//		And set end_statement to the termination condition
+//*************************************************************
+//
+// Return conditions are:
+// 	0 - Condition not met
+// 	-1 - Condition met
+//************************************************************
+
+
+int actions::end_check() {
+	if (end_flag ==1) {
+		DBA("I am already done. CAUSE: " + end_statement);
+		return -1
+	}
+	if(find(end_conditions.begin(), end_conditions.end(), "Empty Initial Hand") != v.end()){
+		if (initial_hand.size() == 0){
+			end_statement = "End Condition Met --- I emptied my initial hand ---";
+			end_flag = 1;
+			return -1;
+		}
+	if(find(end_conditions.begin(), end_conditions.end(), "Get to Turn") != v.end()){
+		if(turn_limiter > 0 && turn_counter == turn_limiter){
+			end_statement = "End Condition Met --- I got to Turn " + to_string(turn_limiter) + " ---";
+			end_flag = 1;
+			return -1;
+		}	
+	}
+	return 0;
 }
+
+
+int actions::deck_size_check(){
+	if (end_flag ==1) {
+		DBA("I am already done. CAUSE: " + end_statement);
+		return -1
+	}
+	if(deck.size() = 0){
+		end_statement = "I LOSE --- I can not draw any more cards ---";
+		end_flag = 1;
+		return -1;
+	}
+	return 0;
+}
+
+//-----------------------------------
+//This functions sets the end condtions from a given set of strings
+//	only 2 implemented not
+//----------------------------------------------
+//TODO test Get to turn X
+
+void set_end_condition(vector<string> conditions){
+	
+	if (conditions.size() > 0){ 
+		for ( int c = 0; c < conditions.size(); c++){
+			if(conditions[c] == "Empty Initial Hand"){
+				DB("Found end conditon initial hand", 0.5);
+				end_conditions.push_back("Empty Initial Hand");
+			}
+			if(find(conditions[c].begin(), conditions[c].end(), "Get to Turn ") != conditions[c].end()){
+				end_conditions.push_back("Get to Turn");
+				string turn_string = condition[c].substr(12);
+				DB("Found Turn limit of: " + turn_string, 0.5);
+				int turn_limit = stoi(turn_string);
+				turn_limiter = turn_limit;
+			}
+
+		}
+	}
+}
+	
 
