@@ -30,8 +30,7 @@ void card::set_card(string name, int mana_value, string cost, vector<string> car
 	ID = name;
 	CMC = mana_value;
 	Cost_string = cost;
-	DB("Next step parse_Cost()",-4);
-	DB("THe cost to parse is " + Cost_string, -4);
+	DB("THe cost to parse is " + Cost_string, -2.1);
 	Cost = parse_Cost(cost); 
 	Super_Type = card_super_types;
 	Sub_Type = card_sub_types;
@@ -72,7 +71,7 @@ vector<char> card::parse_Cost(string cost_string) {
 	cost_split.push_back(cost_string);
 
 	for (auto part : cost_split){
-		DB("This is a part of cost " + part, -4);
+		DB("This is a part of cost " + part, -2.1);
 		part = trim_mana_string(part);
 		size_t t;
 		try{

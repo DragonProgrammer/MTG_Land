@@ -15,7 +15,9 @@
 #include "cost.h"
 #include "mana.h"
 #include "game_data.h"
+#include <map>
 
+using std::map;
 using std::abs;
 using std::cout;
 using std::default_random_engine;
@@ -38,6 +40,7 @@ vector<card> deck;
 
 vector<mana> usable_mana;  // mana avalable to cast spells
 
+vector<GameState> state;
 
 Game_Data game_play_record();
 
@@ -48,6 +51,9 @@ int Land_per_turn_flag = 0;
 int turn_counter = 0;
 
 int mana_sources =0;
+
+map<string, char> land_to_color = {{"Plains", 'W'};{"Mountain", 'R'};{"Forest", 'G'}; {"Swamp", 'B'}; {"Island", 'U'}};
+map<char, string> color_to_land = {{'W', "Plains"};{'R', "Mountain"};{'G', "Forest"}; {'B' , "Swamp"}; {'U' ,"Island",}};
 
 /***********************************************************
  *  DECK FUNCTIONS
@@ -67,13 +73,15 @@ void actions::set_deck(vector<card> from_main) {
 
 
 int actions::draw_card() {
-	if (deck.size() > 0) {
-		DB("Draw " + deck[0].get_Name(), 1);
+	if(deck_size_check() == -1){
+		return -1;
+	}
+	else{
+		DB("Draw " + deck[0].get_Name(), 1.25);
 		hand.push_back(deck[0]);
 		deck.erase(deck.begin());
 		return 0;
-	} else
-		return -4;
+	}
 }
 
 
@@ -259,6 +267,15 @@ void actions::new_turn(vector<card>& in_play) {
 
 
 
+
+//-------------------------------------------------------------------------------
+//              LAND FUNCTIONS
+//---------------------------------------------------------------------------
+
+
+
+
+
 //-----------------------------------------------------------------------------
 //this function simulates terimorphic expance
 //TODO split function so there is an effect search that looks for terimorfic and other sac to find land(s) and the actual search
@@ -271,7 +288,7 @@ void actions::new_turn(vector<card>& in_play) {
 //   0 = all lands found
 //  -1 = no lands to find
 //  -2 = error happened in card removal from deck
-//  -3 = error happened in card removal from field //TODO
+//  -3 = error happened in card removal from field 
 //  -4 = found under the alotted lands //TODO  this should have some more reporting added to it
 //
 //-----------------------------------------------------------------------------
@@ -288,17 +305,19 @@ int actions::land_search() {
 
 	card land_searcher;
 
+
+	// check field for land search cards
 	for (auto card_on_field : field) {
 		//see if there is a search effect on the field, and that the cost is payable
 		//TODO add in mana cost
 		
-		if (card_on_field.get_Effect().get_Eff_Type() == "Search" &&
+		if (card_on_field.get_Effect().get_Eff_Type() == "Search" && 
 		    card_on_field.get_Effect().get_Eff_Cost().find("Tap") != string::npos &&
 		    card_on_field.get_Mode() == 'U') 
 		{
-			DB("found Land search", 3.1);
+			DB("found Land search", 30);
 			search_found_flag = 1;
-			land_searcher = card_on_field;  //at this point is search_avalability function either add this card to found vector or just return this card
+			land_searcher = card_on_field;  //Found land search TODO allow for multiple searchers
 
 		//set up variable to determine effects of search
 			search_Effect = card_on_field.get_Effect();
@@ -309,27 +328,30 @@ int actions::land_search() {
 			
 		}
 	}
-	if (search_found_flag == 0 )
-		return 1; // no land search found
+	
+	if (search_found_flag == 0 ) return 1; // no land search found
 
 
 			//determine if I am seraching for basic land
 			//TODO iplement panaramas and shard convergence
 	if(search_Target.find("Basic") != string::npos){
-				//create a vector of basic land cards from deck
-		vector<card> lands_in_deck;
+		
+	//create a vector of basic land cards from deck
+		vector<card> lands_in_deck; 
 		for (auto card_in_deck : deck) {
 			if (card_in_deck.is_of_Type(search_Target))
 				lands_in_deck.push_back(card_in_deck);
 		}
-		if (lands_in_deck.size() > 0) {
+
+
+		if (lands_in_deck.size() == 0) return -1; // no lands of target found
 
 				//TODO add found_land vector to implement Cultivate
 				
 			//	for(int l = 0; l < num_lands; l++){
 			int found_number = 0; // to make sure i find only Num_lands
 			while( lands_in_deck.size() > 0) {
-				card found_land = find_land(lands_in_deck);
+				card found_land = find_land(lands_in_deck, );
 					
 						
 				found_number++;
@@ -343,8 +365,8 @@ int actions::land_search() {
 				if(land_Endpoint == "Hand" ){
 					hand.push_back(found_land);
 				}
-				if (remove_card(found_land, deck) == -3) {
-					return -3;
+				if (remove_card(found_land, deck) == -2) {
+					return -2;
 				}  // somethuing happeded that remved land from deck premachurly
 
 				if (found_number == Num_lands)
@@ -352,7 +374,7 @@ int actions::land_search() {
 			}
 		}
 		if( remove_card(land_searcher, field) == -3 )
-			return -3; //TODO difenciate this from the land removal
+			return -3; 
 		return 0; //all lands found
 	} else  // if size == 0
 		return -1;  // no lands of target in deck
@@ -402,7 +424,8 @@ card actions::find_multi_color_land(vector<card> lands, vector<string> mana_need
 	for(int second_want = 0; second_want < mana_need.size(); second_want++){
 		mana_want_2 = mana_need[second_want];
 
-
+	}
+}
 
 card actions::find_land(vector<card> lands) {
 	vector<string> deciding_vector = compute_need();
@@ -996,6 +1019,12 @@ float actions::average_for_deck(vector<card> input) {
 
 /***********************************************************
  * Loop of game 
+ *
+ *
+ *
+ **************************
+ *
+ *
  * *****************/
  // DEBUG levels:
  //
@@ -1008,38 +1037,54 @@ float actions::average_for_deck(vector<card> input) {
 
 
 int actions::game_loop(vector<card> input, int run) {
+
+	//reset game data
 	game_play_data.clear;
 	game_play_data = new Game_Data(run);
 	mana_report newest_mana_report;
-
 	turn_counter = 0;
-
 	turns_without_land_drop = 0;
-
-	set_deck(input);
-	set_initial_Hand();
 	field.clear();
+	
+	//set up deck
+	set_deck(input);
+
+	//Draw initial hand
+	set_initial_Hand();
+
+	//TODO implement muligan
+	
+
 	set_state(); // game state imnitializer
-	DB("Initial Hand", 14);
-	DBV(initial_hand, 14);
+	DB("Initial Hand", 1.1);
+	DBV(initial_hand, 1.1);
+	
 	while (1 == 1) {
+	
+		// reset field for new turn
 		new_turn(field);
-		DB("This is turn:   " + to_string(turn_counter) + "\n", 14);
-		int loop_statement = draw_card();
-		if (loop_statement == -4) {
-			// end run
-			DBA("Drew all cards in " + to_string(turn_counter) + " turns");
-			set_state();// allows me to make report off of failed run
-			DBA("This game had " + to_string(turns_without_land_drop) + " turns with no lands to play");
-			DBA("Field at end of game");
-			DBVA(field);
-			return 0; //indicates failed run
-		}
-		draw_all_Mana(field);
+		loop_statement = end_check;
+		if(end_check() == -1){
 		
+		
+				//TODO field Report
+			return turn_counter;
+		}
+
+		DB("This is turn:   " + to_string(turn_counter) + "\n", 1);
+
+		//TODO upkeep Phase
+
+		if(draw_card() == -1){
+			//TODO field Report
+			return 0; //indicate a failed run
+		}
+
+		//draw initial mana
+		draw_all_Mana(field);
 		newest_mana_report = game_play_data.create_mana_report(usable_mana, mana_from_optional_sources, turn_counter, "Start of turn");
 		
-		DB( report_mana(newest_mana_report) , 1);
+		DB( report_mana(newest_mana_report) , 1.5);
 
 		biggest_thing_in_hand = biggest_in_hand();
 		
@@ -1057,40 +1102,38 @@ int actions::game_loop(vector<card> input, int run) {
 	
 	//play lands section
 		loop_statement = play_Land();
-		if (loop_statement == -1) DBA( "no lands to play "<< to_string(turn_counter) );
+		if (loop_statement == -1) DB( "no lands to play "<< to_string(turn_counter), 3.2 );
 		if (loop_statement == -2) DBA( "Multiple calls to play_land() this turn" );
 		if (loop_statement == -3) DBA( "Error removing land from hand" );
-		if (loop_statement == 1) {
-			DBA("Field at end of game");
-			DBVA(field);
-			set_state();// allows me to make report of run
+		if(end_check() == -1){
+			DBA("Cleared out hand by casting " + last_card_played.get_ID());
+			//TODO field Report
 			return turn_counter;
 		}
-			// game limiter for testing
-		if(turn_counter > 15){
-			DBA("Field at end of game");
-			DBVA(field);
-			set_state();// allows me to make report off of  run
-			return 0;
-		}
+
 		draw_all_Mana(field);// adds mana from new land
 		
 		set_state();
 		
 		while(0==0){
+
+			// check for mana amount
 			int mana_available_check = usable_mana.size() + mana_from_optional_sources.size();
 			if (mana_available_check == 0){
-				DBA("Done casting things");
+				DB("Used Up all mana Turn " + to_String(turn_counter), 4.4);
 				break;
 			}
 
+			//find biggest thing to play
 			card thing_to_play = biggest_thing_playable();
+
+
 			string name_thing_to_play = thing_to_play.get_ID();
 			if(name_thing_to_play == "-"){
-				DB("THis is blank card", 14);
+				DB("THis is blank card", 4.3);
 				break;
 			}
-			DB("\nThe card to play is:  " + name_thing_to_play, 14);
+			DB("\nThe card to play is:  " + name_thing_to_play, 4.3);
 			if(name_thing_to_play.size() == 0)
 				loop_statement = -5;
 			if (loop_statement == -5){
@@ -1102,7 +1145,13 @@ int actions::game_loop(vector<card> input, int run) {
 			
 			if (loop_statement == -3) DBA( "Error removing biggest_thing from hand" );
 			set_state(); // each spell makes a new gamestate
+			last_card_played = thing_to_play;
+			DB("Cast " + last_card_played.get_ID(), 4);
 
+			if(end_check() == -1){
+				DBA("Cleared out hand by casting " + last_card_played.get_ID());
+				//TODO field Report
+				return turn_counter;
 
 			DB("THe field after play", 14);
 			DBV(field, 14);
@@ -1137,6 +1186,11 @@ int actions::game_loop(vector<card> input, int run) {
 // Return conditions are:
 // 	0 - Condition not met
 // 	-1 - Condition met
+// 	-2 - the game failed // done from drawing all cards  
+// 	TODO differenciate
+// 		I got milled  - game lose
+// 		My draw engine killed me - deck too fast
+// 		I finaly drew the last card - bad deck/ stalemate
 //************************************************************
 
 
